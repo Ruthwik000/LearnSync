@@ -1,0 +1,481 @@
+Build a full-featured frontend web application called **LearnSync** using **React (functional components, hooks)** and **Tailwind CSS**.
+
+LearnSync is an AI-powered learning coordination platform designed for NGOs to manage students, mentors, and educational programs.
+
+The system must simulate backend behavior using **localStorage + mock data**, while maintaining real-world workflows and a clean SaaS-style UI.
+
+---
+
+# 🧠 CORE PRODUCT IDEA
+
+LearnSync is a connected ecosystem where:
+
+* Students receive personalized, structured learning
+* Mentors teach, create content, and support students
+* NGOs monitor performance and impact
+* AI enhances learning, planning, and decision-making
+
+---
+
+# 🏗️ SYSTEM ARCHITECTURE
+
+There are 4 main layers:
+
+1. Student Interface (Learning + Gamification)
+2. Mentor Interface (Teaching + Content Creation)
+3. NGO Admin Interface (Analytics + Control)
+4. AI Layer (Gemini 2.5 Flash integration)
+
+---
+
+# 🎨 DESIGN SYSTEM (STRICT RULES)
+
+* NO gradients
+* NO flashy UI
+* NO glassmorphism
+
+Use:
+
+* `bg-gray-50` (background)
+* `bg-white` (cards)
+* `border border-gray-200`
+* `text-gray-900` (primary text)
+* `text-gray-500` (secondary text)
+* `bg-blue-600 text-white` (primary buttons)
+* `text-green-600` (success)
+* `text-red-500` (alerts)
+
+UI style must feel like:
+👉 Notion / Stripe / Linear
+
+Use:
+
+* `rounded-xl`
+* `p-4`, `p-6`
+* `gap-4`
+* `shadow-sm`
+
+---
+
+# 🧱 GLOBAL LAYOUT
+
+## Sidebar:
+
+* LearnSync logo
+* Navigation:
+
+  * Dashboard
+  * Courses
+  * Students
+  * Mentors
+  * Study Planner
+  * Doubts
+  * Analytics
+
+## Topbar:
+
+* User name
+* Role switcher:
+
+  * Student
+  * Mentor
+  * Admin
+
+---
+
+# 🧠 MOCK DATA (LOCAL STORAGE)
+
+```js
+{
+  students: [],
+  mentors: [],
+  courses: [],
+  chapters: [],
+  topics: [],
+  sessions: [],
+  assignments: [],
+  doubts: [],
+  studyPlans: [],
+  attendance: [],
+  analytics: {}
+}
+```
+
+---
+
+# 👶 STUDENT SYSTEM (FULL FLOW)
+
+---
+
+## 🔹 ONBOARDING
+
+Multi-step form:
+
+1. Basic info:
+
+   * Name, age, class
+
+2. Subjects:
+
+   * Select subjects
+
+3. Availability:
+
+   * Days (Mon–Sun)
+   * Time slots
+
+4. Skill test:
+
+   * 2–3 questions
+
+---
+
+## 🔹 SYSTEM OUTPUT
+
+* Age group
+* Skill level
+* Weak topics
+
+---
+
+## 🔹 AGE-ADAPTIVE UI SYSTEM
+
+```js
+if (age <= 10) → Foundation Mode
+if (age <= 14) → Growth Mode
+else → Mastery Mode
+```
+
+---
+
+## 🔹 COURSE SYSTEM (STRUCTURED)
+
+Course → Chapter → Topic
+
+Example:
+Math → Fractions → Basics
+
+---
+
+## 🔹 GAMIFICATION
+
+* XP points
+* Levels
+* Streaks
+* Chapter unlocking system
+
+---
+
+## 🔹 STUDENT DASHBOARD
+
+Sections:
+
+1. Today’s Study Plan
+2. Courses (progress)
+3. Weak Areas
+4. XP & Level
+
+---
+
+## 🔹 STUDY PLAN CREATOR
+
+Inputs:
+
+* Availability
+* Weak topics
+* Subjects
+
+Logic:
+
+* Prioritize weak topics
+* Allocate time
+
+Output:
+
+* Daily tasks
+* Weekly plan
+
+---
+
+## 🔹 LEARNING FLOW
+
+1. Open topic
+2. Read explanation
+3. Solve questions
+4. Submit answers
+5. Get feedback
+6. XP updated
+
+---
+
+## 🔹 DOUBT SYSTEM (IMPORTANT)
+
+Student raises doubt:
+
+* Topic
+* Question
+
+---
+
+## 🔥 SYSTEM BEHAVIOR:
+
+Broadcast doubt to:
+
+* All mentors
+* Same subject
+* Same level
+
+---
+
+---
+
+# 🧑‍🏫 MENTOR SYSTEM
+
+---
+
+## 🔹 ONBOARDING
+
+* Education
+* Skills
+* Experience
+* Availability
+* Self-rating
+
+---
+
+## 🔹 DASHBOARD
+
+Sections:
+
+* Assigned students
+* Doubt feed
+* Course management
+* Session logging
+
+---
+
+## 🔹 COURSE CREATION
+
+Mentor creates:
+
+* Course
+* Chapter
+* Topic
+* Content
+* Questions (MCQ)
+
+---
+
+## 🔹 SESSION LOGGER
+
+After session:
+
+* Topic
+* Score
+* Notes
+
+---
+
+---
+
+# 🏢 NGO ADMIN SYSTEM
+
+---
+
+## 🔹 DASHBOARD
+
+Top metrics:
+
+* Total students
+* Active mentors
+* Avg performance
+* Attendance %
+
+---
+
+## 🔹 ANALYTICS
+
+### Student:
+
+* Progress trends
+* Weak topics
+
+### Mentor:
+
+* Effectiveness score
+* Sessions
+
+### Attendance:
+
+* Student + mentor attendance
+
+---
+
+## 🔹 AI INSIGHTS
+
+Show:
+
+* Alerts
+* Recommendations
+
+---
+
+---
+
+# 🔀 SMART MATCHING SYSTEM
+
+---
+
+Inputs:
+
+* Student: age, level, subject, availability
+* Mentor: skill, experience, availability
+
+---
+
+Rules:
+
+* Match subject
+* Match level
+* Match availability
+* Low experience → younger students
+
+---
+
+---
+
+# 📅 SMART SCHEDULING SYSTEM
+
+---
+
+Inputs:
+
+* Student availability
+* Mentor availability
+
+---
+
+Logic:
+
+* Find overlapping slots
+
+---
+
+Output:
+
+* Suggested session time
+
+---
+
+---
+
+# 📚 MODULE SYSTEM
+
+---
+
+NGO uploads modules → Mentor uses → Student learns
+
+---
+
+---
+
+# 🤖 AI SYSTEM (Gemini 2.5 Flash)
+
+---
+
+## Features:
+
+1. Question generation
+2. Simple explanation
+3. Feedback generation
+4. Study plan generation
+5. NGO recommendations
+
+---
+
+## Function:
+
+```js
+callGemini(prompt)
+```
+
+---
+
+---
+
+# 🔗 FEATURE INTERCONNECTION
+
+---
+
+## FLOW 1:
+
+Mentor creates content → Student learns → Performance stored
+
+---
+
+## FLOW 2:
+
+Performance → Weak topics → Study plan updated
+
+---
+
+## FLOW 3:
+
+Student doubt → Broadcast → Mentor answers
+
+---
+
+## FLOW 4:
+
+All data → AI → NGO insights
+
+---
+
+## FLOW 5:
+
+Student + mentor data → Matching → Scheduling
+
+---
+
+---
+
+# 🧪 DEMO FLOW
+
+1. Student onboarding
+2. Mentor onboarding
+3. Auto assignment
+4. Study plan generated
+5. Student learns
+6. Student raises doubt
+7. Mentor answers
+8. NGO views analytics
+9. AI recommendations shown
+
+---
+
+---
+
+# 🏆 FINAL PRODUCT VISION
+
+LearnSync should feel like:
+
+👉 A professional SaaS platform that:
+
+* Structures learning
+* Connects mentors & students
+* Uses AI to guide decisions
+* Helps NGOs measure impact
+
+---
+
+Focus on:
+
+* Clean UI
+* Real workflows
+* Strong feature connection
+
+Avoid:
+
+* Overdesign
+* Complexity
+* Unnecessary animations

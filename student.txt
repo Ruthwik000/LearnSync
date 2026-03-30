@@ -1,0 +1,741 @@
+Build a complete **Student Portal** for LearnSync using **React (functional components + hooks)** and **Tailwind CSS**.
+
+The Student Portal must act as:
+👉 A **personal tutor + planner + progress tracker**
+
+All data must be handled using **localStorage (mock data)**.
+
+The UI must be **clean, minimal, professional**, with **NO gradients**.
+
+---
+
+# 🧠 CORE OBJECTIVE
+
+The Student Portal must:
+
+* Personalize learning instantly
+* Adapt UI based on age
+* Provide structured course learning
+* Guide daily study using a planner
+* Track progress & performance
+* Allow collaborative doubt resolution
+* Use AI for assistance
+
+---
+
+# 🧾 1. ONBOARDING FLOW (FIRST LOGIN)
+
+---
+
+## 🔹 Step 1: Basic Info
+
+UI:
+
+* Input fields:
+
+  * Name
+  * Age
+  * Class
+
+---
+
+## 🔹 Step 2: Subjects Selection
+
+UI:
+
+* Multi-select cards:
+
+  * Math
+  * English
+  * Science
+
+---
+
+## 🔹 Step 3: Availability
+
+UI:
+
+* Days grid (Mon–Sun checkboxes)
+* Time slots input (dropdown or chips)
+
+---
+
+## 🔹 Step 4: SELF-ASSESSMENT (UPDATED — NO QUIZ)
+
+---
+
+## 🎯 Title:
+
+“Tell us where you need help”
+
+---
+
+## UI:
+
+For each subject:
+
+### Example: Math
+
+Show topics:
+
+* Addition
+* Subtraction
+* Fractions
+* Division
+
+---
+
+## For each topic:
+
+Three options:
+
+* 😕 Weak
+* 😐 Okay
+* 😊 Strong
+
+---
+
+## UI Style:
+
+* Horizontal buttons
+* Color-coded:
+
+  * Weak → red
+  * Okay → yellow
+  * Strong → green
+
+---
+
+## 🎤 Voice Input Button
+
+* Button: “Tell by Voice”
+
+Flow:
+
+* Student speaks:
+  “I am weak in fractions”
+
+* System updates topic state (mock parsing)
+
+---
+
+## 💾 Store:
+
+```js id="std-skill"
+{
+  subject: "Math",
+  topics: {
+    fractions: "weak",
+    addition: "strong"
+  }
+}
+```
+
+---
+
+# 🎨 2. AGE-ADAPTIVE UI SYSTEM
+
+---
+
+## Logic:
+
+```js id="mode-logic"
+if (age <= 10) → foundation
+else if (age <= 14) → growth
+else → mastery
+```
+
+---
+
+## Modes:
+
+### Foundation (5–10):
+
+* Big UI
+* Icons
+* “Missions”
+* Stars ⭐
+
+---
+
+### Growth (11–14):
+
+* XP system
+* Badges
+* Progress bars
+
+---
+
+### Mastery (15–19):
+
+* Minimal UI
+* Study planner focus
+* Analytics
+
+---
+
+---
+
+# 🏠 3. STUDENT DASHBOARD
+
+---
+
+## 🔥 Section 1: Today’s Study Plan
+
+Card UI:
+
+* Tasks list:
+
+  * Revise Fractions
+  * Solve 5 questions
+  * Take quiz
+
+Button:
+
+* “Start Learning”
+
+---
+
+## 📚 Section 2: Courses
+
+Grid of cards:
+
+Each card:
+
+* Course name
+* Progress bar
+* XP / level
+
+---
+
+## ⚠️ Section 3: Weak Areas
+
+* List weak topics
+* Styled in red
+
+---
+
+## 📊 Section 4: Progress Summary
+
+* Overall %
+* Weekly improvement
+
+---
+
+## 🎮 Section 5: XP / Level
+
+* XP count
+* Level badge
+
+---
+
+---
+
+# 📚 4. COURSE SYSTEM
+
+---
+
+## Structure:
+
+Course → Chapter → Topic
+
+---
+
+## 📘 Course Page
+
+* Title
+* Progress bar
+* Chapters list
+
+---
+
+## 📖 Chapter Page
+
+* Topics list
+* Status:
+
+  * Completed
+  * In Progress
+  * Locked
+
+---
+
+## 🔒 Unlock Logic:
+
+* Next chapter unlocks only after completion
+
+---
+
+---
+
+# 🧪 5. TOPIC LEARNING PAGE
+
+---
+
+## Layout:
+
+### Explanation Section
+
+* Simple text
+
+---
+
+### AI Button
+
+* “Explain Simply”
+
+---
+
+### Questions Section
+
+* MCQs
+
+---
+
+### Submit Button
+
+---
+
+## After Submit:
+
+* Show score
+* Highlight wrong answers
+* Update progress
+* Add XP
+
+---
+
+---
+
+# 📅 6. STUDY PLAN CREATOR
+
+---
+
+## Inputs:
+
+* Availability
+* Weak topics
+* Subjects
+
+---
+
+## Logic:
+
+* Weak topics = priority
+* Allocate time
+
+---
+
+## Output:
+
+Daily tasks:
+
+* Revise Fractions
+* Practice
+* Quiz
+
+---
+
+## UI:
+
+* Daily plan card
+* Weekly planner view
+
+---
+
+---
+
+# 🤖 7. AI FEATURES (Gemini 2.5 Flash)
+
+---
+
+## Buttons:
+
+* “Explain Simply”
+* “Generate Study Plan”
+
+---
+
+## Behavior:
+
+* Loading state
+* Show result in card
+
+---
+
+---
+
+# 🙋 8. DOUBT SYSTEM (COLLABORATIVE)
+
+---
+
+## Student Action:
+
+Click “Raise Doubt”
+
+---
+
+## Form:
+
+* Topic
+* Question text
+
+---
+
+## Save:
+
+```js id="doubt"
+{
+  studentId,
+  subject,
+  level,
+  question,
+  replies: []
+}
+```
+
+---
+
+## SYSTEM BEHAVIOR:
+
+Broadcast to:
+
+* All mentors
+* Same subject
+* Same level
+
+---
+
+---
+
+# 📊 9. PROGRESS PAGE
+
+---
+
+## Show:
+
+* Weekly graph
+* Topic mastery
+* Completion %
+
+---
+
+---
+
+# 🔄 10. CONTINUOUS ADAPTATION
+
+After each activity:
+
+* Update:
+
+  * Weak topics
+  * Progress
+  * Study plan
+
+---
+
+---
+
+# 🔗 FULL USER FLOW
+
+```text id="student-flow"
+Onboarding
+ ↓
+Profile created
+ ↓
+Dashboard shows plan
+ ↓
+Student studies topic
+ ↓
+Answers questions
+ ↓
+Gets feedback
+ ↓
+Progress updates
+ ↓
+Study plan updates
+ ↓
+Raises doubt
+ ↓
+Mentor responds
+```
+
+---
+
+---
+
+# 🧩 COMPONENTS
+
+* DashboardCard
+* CourseCard
+* ProgressBar
+* TaskList
+* TopicCard
+* QuestionCard
+* Modal
+* InputField
+
+---
+
+---
+
+# 🎯 UX PRINCIPLES
+
+* Minimal clicks
+* Clean layout
+* Clear actions
+* Fast interaction
+
+---
+
+---
+
+# 🏆 FINAL EXPERIENCE
+
+The student portal should feel like:
+
+👉 A **personal AI tutor + structured learning system**
+
+NOT:
+
+* A static dashboard
+
+---
+
+Focus on:
+
+* Personalization
+* Clarity
+* Engagement
+* Guidance
+# 🤖 AI-POWERED LEARNING PIPELINE (STUDENT SIDE — CRITICAL FEATURE)
+
+Implement a system where mentor-provided content is transformed into personalized learning modules for students using AI (Gemini 2.5 Flash).
+
+---
+
+# 🧑‍🏫 STEP 1: MENTOR PROVIDES MATERIAL
+
+Mentor uploads or inputs:
+
+* Topic (e.g., “Fractions Basics”)
+* Content (text / notes)
+
+Store in:
+
+```js
+{
+  topic: "Fractions",
+  content: "definition and examples...",
+  difficulty: "basic"
+}
+```
+
+---
+
+# 🤖 STEP 2: AI CONTENT PROCESSING
+
+When student opens the topic:
+
+Call Gemini with:
+
+Prompt:
+
+"Convert the following content into a structured learning module for a {student_level} student. Include:
+
+1. Simple explanation
+2. Key points
+3. Examples
+4. Summary"
+
+---
+
+# 📘 STEP 3: STUDENT LEARNING MODULE (UI)
+
+Render as:
+
+### Section 1: Simplified Explanation
+
+* Easy-to-read content
+
+---
+
+### Section 2: Key Points
+
+* Bullet list
+
+---
+
+### Section 3: Examples
+
+* Simple examples
+
+---
+
+### Section 4: Quick Summary
+
+* Short recap
+
+---
+
+---
+
+# 🧪 STEP 4: AI QUIZ GENERATION
+
+Use student data:
+
+* Level
+* Weak topics
+* Past performance
+
+---
+
+Prompt:
+
+"Generate 5 questions for the topic 'Fractions' for a {student_level} student. Focus more on weak areas."
+
+---
+
+Output:
+
+* 5 questions
+* Difficulty tags
+
+---
+
+---
+
+# 🎯 STEP 5: PERSONALIZATION (VERY IMPORTANT)
+
+Use:
+
+```js
+studentData = {
+  level: "beginner",
+  weakTopics: ["fractions"]
+}
+```
+
+---
+
+Rules:
+
+* Weak topics → more questions
+* Beginner → simple language
+* Strong topics → fewer questions
+
+---
+
+---
+
+# 📊 STEP 6: AFTER STUDENT COMPLETES QUIZ
+
+Store:
+
+```js
+{
+  score: 3,
+  topic: "Fractions"
+}
+```
+
+---
+
+Call Gemini:
+
+Prompt:
+
+"A student scored 3/5 in Fractions. Suggest what they should revise next."
+
+---
+
+Output:
+
+* Feedback
+* Next topic suggestion
+
+---
+
+---
+
+# 🔄 STEP 7: SYSTEM UPDATES
+
+Update:
+
+* Weak topics
+* Progress
+* Study plan
+
+---
+
+---
+
+# 🔗 FULL FLOW
+
+```text
+Mentor uploads content
+        ↓
+AI processes content
+        ↓
+Student sees structured module
+        ↓
+Student takes quiz
+        ↓
+AI gives feedback
+        ↓
+System updates learning path
+```
+
+---
+
+---
+
+# 🎯 UI REQUIREMENTS
+
+---
+
+## Topic Page Layout:
+
+1. Title
+2. Explanation
+3. Key Points
+4. Examples
+5. Summary
+6. Quiz
+7. Feedback
+
+---
+
+## Buttons:
+
+* “Explain Simply”
+* “Generate Quiz”
+* “Submit Answers”
+
+---
+
+---
+
+# ⚠️ IMPORTANT
+
+* Keep content short
+* Show loading states
+* Allow mentor override
+
+---
+
+---
+
+# 🏆 FINAL GOAL
+
+This feature must feel like:
+
+👉 “Every topic becomes a personalized mini-course automatically”
+
+---
+
+Focus on:
+
+* Simplicity
+* Clarity
+* Personalization
