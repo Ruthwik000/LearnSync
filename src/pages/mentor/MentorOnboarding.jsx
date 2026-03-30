@@ -42,48 +42,59 @@ const MentorOnboarding = ({ onComplete }) => {
   // Simple MCQ Database per subject
   const mcqDatabase = {
     'Mathematics': [
-      { id: 1, question: "What is 12 × 3?", options: ["36", "24", "30"], correct: 0 },
-      { id: 2, question: "What is the square root of 64?", options: ["6", "8", "10"], correct: 1 }
+      { id: 1, question: "A student struggles with word problems despite knowing arithmetic. What is the best teaching approach?", options: ["Drill more arithmetic", "Teach them to identify key information and translate words to equations", "Skip word problems entirely"], correct: 1 },
+      { id: 2, question: "When introducing fractions to young learners, which method is most effective?", options: ["Start with abstract notation like 3/4", "Use visual models like pie charts and number lines", "Memorize fraction rules first"], correct: 1 },
+      { id: 3, question: "What does Bloom's Taxonomy suggest about structuring math lessons?", options: ["Always start with the hardest problems", "Progress from recall to application to analysis", "Focus only on memorization"], correct: 1 }
     ],
     'English': [
-      { id: 1, question: "Which is a synonym for 'happy'?", options: ["Sad", "Joyful", "Angry"], correct: 1 },
-      { id: 2, question: "Identify the verb: 'The dog barked loudly.'", options: ["dog", "loudly", "barked"], correct: 2 }
+      { id: 1, question: "A student writes grammatically correct sentences but lacks coherence in paragraphs. What should you focus on?", options: ["More grammar drills", "Teaching transition words and paragraph structure", "Correcting spelling mistakes"], correct: 1 },
+      { id: 2, question: "What is the best strategy to improve vocabulary retention in students?", options: ["Memorizing dictionary definitions", "Contextual learning through reading and usage", "Weekly spelling tests only"], correct: 1 },
+      { id: 3, question: "Which approach best develops critical thinking in English literature?", options: ["Summarizing the plot only", "Asking open-ended questions about character motivation and themes", "Focusing solely on the author's biography"], correct: 1 }
     ],
     'Science': [
-      { id: 1, question: "What gas do plants absorb from the atmosphere?", options: ["Oxygen", "Carbon Dioxide", "Nitrogen"], correct: 1 },
-      { id: 2, question: "What is the boiling point of water?", options: ["50°C", "100°C", "150°C"], correct: 1 }
+      { id: 1, question: "A student believes heavy objects fall faster than light ones. How should you address this misconception?", options: ["Tell them they are wrong and give the correct answer", "Design a hands-on experiment comparing falling objects", "Ignore it and move to the next topic"], correct: 1 },
+      { id: 2, question: "What is the inquiry-based learning approach in Science teaching?", options: ["Students memorize facts from textbooks", "Students investigate questions through experiments and observations", "Teacher lectures while students take notes"], correct: 1 },
+      { id: 3, question: "When teaching the scientific method, what is the correct sequence?", options: ["Hypothesis → Observation → Experiment", "Observation → Hypothesis → Experiment → Analysis", "Experiment → Hypothesis → Observation"], correct: 1 }
     ],
     'EVS': [
-      { id: 1, question: "Which of these is a renewable resource?", options: ["Coal", "Solar Energy", "Petroleum"], correct: 1 },
-      { id: 2, question: "Which layer of the atmosphere protects us from UV rays?", options: ["Troposphere", "Ozone Layer", "Mesosphere"], correct: 1 }
+      { id: 1, question: "What is the most effective way to teach environmental awareness to young students?", options: ["Textbook reading only", "Field trips and hands-on activities like gardening", "Watching documentaries without discussion"], correct: 1 },
+      { id: 2, question: "How should a mentor handle conflicting information about climate change from students' homes?", options: ["Dismiss the parents' views", "Present evidence-based facts and encourage critical thinking", "Avoid the topic altogether"], correct: 1 },
+      { id: 3, question: "Which pedagogical approach works best for EVS with primary students?", options: ["Abstract lectures on ecosystems", "Place-based learning connecting lessons to the local environment", "Rote memorization of environmental terms"], correct: 1 }
     ],
     'General Knowledge': [
-      { id: 1, question: "Which is the largest continent?", options: ["Africa", "Asia", "Europe"], correct: 1 },
-      { id: 2, question: "Who painted the Mona Lisa?", options: ["Van Gogh", "Da Vinci", "Picasso"], correct: 1 }
+      { id: 1, question: "How can a mentor make GK sessions engaging rather than just fact-based?", options: ["Give students lists to memorize", "Use quiz games, current events discussions, and project-based exploration", "Test students every class"], correct: 1 },
+      { id: 2, question: "A student shows no interest in General Knowledge topics. What is the best approach?", options: ["Force them to study harder", "Connect GK topics to their personal interests and hobbies", "Reduce their GK curriculum"], correct: 1 },
+      { id: 3, question: "What is the role of formative assessment in GK teaching?", options: ["Only used for final grading", "Ongoing checks to guide teaching and identify gaps", "Testing memorization of dates and facts"], correct: 1 }
     ],
     'Reading & Comprehension': [
-      { id: 1, question: "What is the main idea of a passage?", options: ["The setting", "The core message", "The author's name"], correct: 1 },
-      { id: 2, question: "What does 'inference' mean?", options: ["A direct quote", "An educated guess based on text", "A spelling error"], correct: 1 }
+      { id: 1, question: "A student can read fluently but cannot answer inference-based questions. What does this indicate?", options: ["They need phonics practice", "They lack higher-order comprehension skills", "They are reading too fast"], correct: 1 },
+      { id: 2, question: "Which strategy helps struggling readers build comprehension?", options: ["Reading longer passages", "Teaching them to visualize, predict, and summarize while reading", "Increasing reading speed drills"], correct: 1 },
+      { id: 3, question: "What is 'scaffolded reading' in a teaching context?", options: ["Reading without any support", "Providing structured support that is gradually removed as the student improves", "Only reading aloud to students"], correct: 1 }
     ],
     'Writing Skills': [
-      { id: 1, question: "Which punctuation mark ends a question?", options: ["Period", "Comma", "Question Mark"], correct: 2 },
-      { id: 2, question: "What is a thesis statement?", options: ["Main argument", "Conclusion", "Title"], correct: 0 }
+      { id: 1, question: "A student's essays lack structure. What is the most effective intervention?", options: ["Mark all errors in red", "Teach outlining and graphic organizers before writing", "Ask them to rewrite until it's perfect"], correct: 1 },
+      { id: 2, question: "What is the 'process writing' approach?", options: ["Writing a final draft in one sitting", "A cycle of prewriting, drafting, revising, editing, and publishing", "Copying model essays"], correct: 1 },
+      { id: 3, question: "How should a mentor give feedback on creative writing?", options: ["Focus only on grammar and spelling errors", "Balance positive feedback with specific, constructive suggestions", "Rewrite the student's work for them"], correct: 1 }
     ],
     'Spoken English': [
-      { id: 1, question: "Which of these is a formal greeting?", options: ["Hey bro", "Good morning", "What's up"], correct: 1 },
-      { id: 2, question: "What is proper intonation?", options: ["Speaking very loudly", "Pitch variation when speaking", "Speaking fast"], correct: 1 }
+      { id: 1, question: "A student is fluent but speaks with poor pronunciation. What approach works best?", options: ["Correct every mistake immediately", "Model correct pronunciation naturally and use minimal pairs practice", "Discourage them from speaking until pronunciation improves"], correct: 1 },
+      { id: 2, question: "What is the Communicative Language Teaching (CLT) approach?", options: ["Focus on grammar translation", "Emphasize real-life communication and meaningful interaction", "Memorize dialogues from textbooks"], correct: 1 },
+      { id: 3, question: "How do you build confidence in a shy student during spoken English sessions?", options: ["Call on them frequently in front of the class", "Start with pair activities and small group discussions before larger groups", "Let them only do written work"], correct: 1 }
     ],
     'Logical Reasoning': [
-      { id: 1, question: "If A > B and B > C, then:", options: ["A < C", "C > A", "A > C"], correct: 2 },
-      { id: 2, question: "Find the odd one out: Apple, Banana, Carrot, Orange", options: ["Apple", "Carrot", "Orange"], correct: 1 }
+      { id: 1, question: "What is the best way to develop logical thinking in young learners?", options: ["Give them complex puzzles immediately", "Use age-appropriate pattern recognition, sequencing, and classification activities", "Focus only on mathematics"], correct: 1 },
+      { id: 2, question: "A student gives the right answer but cannot explain their reasoning. What should you do?", options: ["Accept the answer and move on", "Ask probing questions to help them articulate their thought process", "Mark it as incorrect"], correct: 1 },
+      { id: 3, question: "Which tool is most effective for teaching deductive reasoning?", options: ["Memorization worksheets", "Venn diagrams and truth tables with real-world scenarios", "Speed-based quizzes"], correct: 1 }
     ],
     'Communication Skills': [
-      { id: 1, question: "Active listening involves:", options: ["Interrupting", "Paying full attention", "Looking away"], correct: 1 },
-      { id: 2, question: "What is non-verbal communication?", options: ["Emails", "Body language", "Phone calls"], correct: 1 }
+      { id: 1, question: "What is the biggest barrier to effective communication in a classroom?", options: ["Using too many visual aids", "Lack of active listening and one-way lecturing", "Speaking too slowly"], correct: 1 },
+      { id: 2, question: "How should a mentor teach students to handle disagreements constructively?", options: ["Avoid all conflicts", "Model respectful debate techniques and teach 'I' statements", "Let students resolve conflicts without guidance"], correct: 1 },
+      { id: 3, question: "What role does non-verbal communication play in effective teaching?", options: ["It is irrelevant in education", "Body language, eye contact, and gestures significantly impact student engagement", "Only verbal communication matters"], correct: 1 }
     ],
     'Storytelling': [
-      { id: 1, question: "What is the climax of a story?", options: ["The beginning", "The turning point", "The ending"], correct: 1 },
-      { id: 2, question: "Who is the protagonist?", options: ["The villain", "The main character", "The author"], correct: 1 }
+      { id: 1, question: "What makes storytelling an effective pedagogical tool?", options: ["It fills classroom time", "It engages emotions, aids memory retention, and makes abstract concepts relatable", "It replaces the need for structured lessons"], correct: 1 },
+      { id: 2, question: "How can a mentor use storytelling to teach moral values without being preachy?", options: ["State the moral directly at the start", "Let students discover the moral through guided discussion after the story", "Only use stories from textbooks"], correct: 1 },
+      { id: 3, question: "What is the key difference between reading a story and storytelling?", options: ["There is no difference", "Storytelling involves voice modulation, gestures, eye contact, and audience interaction", "Reading is always better than telling"], correct: 1 }
     ]
   };
 
@@ -231,8 +242,8 @@ const MentorOnboarding = ({ onComplete }) => {
             <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
               <motion.div 
                 className="h-full bg-blue-600 rounded-full"
-                initial={{ width: \`\${((step-1) / 6) * 100}%\` }}
-                animate={{ width: \`\${(step / 6) * 100}%\` }}
+                initial={{ width: `${((step-1) / 6) * 100}%` }}
+                animate={{ width: `${(step / 6) * 100}%` }}
                 transition={{ duration: 0.3 }}
               />
             </div>
@@ -298,12 +309,27 @@ const MentorOnboarding = ({ onComplete }) => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           {group.subjects.map(subject => {
                             const isSelected = formData.subjects.includes(subject);
+                            
+                            let activeClassStr = 'border-gray-500 bg-gray-50';
+                            let activeInputStr = 'text-gray-600 focus:ring-gray-500';
+                            
+                            if (group.color === 'blue') {
+                                activeClassStr = 'border-blue-500 bg-blue-50';
+                                activeInputStr = 'text-blue-600 focus:ring-blue-500';
+                            } else if (group.color === 'purple') {
+                                activeClassStr = 'border-purple-500 bg-purple-50';
+                                activeInputStr = 'text-purple-600 focus:ring-purple-500';
+                            } else if (group.color === 'emerald') {
+                                activeClassStr = 'border-emerald-500 bg-emerald-50';
+                                activeInputStr = 'text-emerald-600 focus:ring-emerald-500';
+                            }
+
                             return (
                               <label
                                 key={subject}
                                 className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                                   isSelected 
-                                    ? \`border-\${group.color}-500 bg-\${group.color}-50\` 
+                                    ? activeClassStr 
                                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
                               >
@@ -311,7 +337,7 @@ const MentorOnboarding = ({ onComplete }) => {
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={() => handleSubjectToggle(subject)}
-                                  className={`w-5 h-5 text-\${group.color}-600 rounded focus:ring-\${group.color}-500`}
+                                  className={`w-5 h-5 rounded ${activeInputStr}`}
                                 />
                                 <span className={`font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-600'}`}>
                                   {subject}
@@ -545,7 +571,7 @@ const MentorOnboarding = ({ onComplete }) => {
         </Card>
       </div>
       
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         /* Removing arrows from number input */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
@@ -555,7 +581,7 @@ const MentorOnboarding = ({ onComplete }) => {
         input[type=number] {
           -moz-appearance: textfield;
         }
-      \`}} />
+      `}} />
     </div>
   );
 };
