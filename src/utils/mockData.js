@@ -94,40 +94,135 @@ export const initializeMockData = () => {
   ];
 
   const mockCourses = [
+    // Primary School (Classes 1-5)
     {
       id: 1,
-      name: 'Mathematics',
-      subject: 'Math',
-      level: 'growth',
+      name: 'Mathematics - Primary',
+      subject: 'Mathematics',
+      level: 'foundation',
       createdBy: 1,
-      chapters: [1, 2, 3]
+      chapters: [1, 2, 3, 4]
     },
     {
       id: 2,
-      name: 'English Grammar',
+      name: 'English Grammar - Primary',
       subject: 'English',
       level: 'foundation',
       createdBy: 2,
-      chapters: [4, 5]
+      chapters: [5, 6]
     },
     {
       id: 3,
-      name: 'Science Basics',
+      name: 'Environmental Studies',
+      subject: 'Environmental Studies (EVS)',
+      level: 'foundation',
+      createdBy: 1,
+      chapters: [7, 8]
+    },
+    // Middle School (Classes 6-8)
+    {
+      id: 4,
+      name: 'Mathematics - Middle School',
+      subject: 'Mathematics',
+      level: 'growth',
+      createdBy: 1,
+      chapters: [9, 10, 11]
+    },
+    {
+      id: 5,
+      name: 'Science - Middle School',
       subject: 'Science',
       level: 'growth',
       createdBy: 1,
-      chapters: [6, 7]
+      chapters: [12, 13, 14]
+    },
+    {
+      id: 6,
+      name: 'Social Studies',
+      subject: 'Social Studies',
+      level: 'growth',
+      createdBy: 2,
+      chapters: [15, 16]
+    },
+    // Secondary School (Classes 9-10)
+    {
+      id: 7,
+      name: 'Physics - Secondary',
+      subject: 'Science (Physics)',
+      level: 'mastery',
+      createdBy: 1,
+      chapters: [17, 18]
+    },
+    {
+      id: 8,
+      name: 'Chemistry - Secondary',
+      subject: 'Science (Chemistry)',
+      level: 'mastery',
+      createdBy: 1,
+      chapters: [19, 20]
+    },
+    {
+      id: 9,
+      name: 'Biology - Secondary',
+      subject: 'Science (Biology)',
+      level: 'mastery',
+      createdBy: 1,
+      chapters: [21, 22]
+    },
+    {
+      id: 10,
+      name: 'Mathematics - Secondary',
+      subject: 'Mathematics',
+      level: 'mastery',
+      createdBy: 1,
+      chapters: [23, 24]
     }
   ];
 
   const mockChapters = [
-    { id: 1, courseId: 1, name: 'Fractions', topics: [1, 2, 3], order: 1 },
-    { id: 2, courseId: 1, name: 'Decimals', topics: [4, 5], order: 2 },
-    { id: 3, courseId: 1, name: 'Algebra Basics', topics: [6, 7], order: 3 },
-    { id: 4, courseId: 2, name: 'Parts of Speech', topics: [8, 9], order: 1 },
-    { id: 5, courseId: 2, name: 'Sentence Structure', topics: [10], order: 2 },
-    { id: 6, courseId: 3, name: 'Photosynthesis', topics: [11, 12], order: 1 },
-    { id: 7, courseId: 3, name: 'Human Body', topics: [13], order: 2 }
+    // Mathematics - Primary (Course 1)
+    { id: 1, courseId: 1, name: 'Numbers and Counting', topics: [1, 2, 3], order: 1 },
+    { id: 2, courseId: 1, name: 'Addition and Subtraction', topics: [4, 5], order: 2 },
+    { id: 3, courseId: 1, name: 'Multiplication and Division', topics: [6, 7], order: 3 },
+    { id: 4, courseId: 1, name: 'Shapes and Patterns', topics: [8, 9], order: 4 },
+    
+    // English - Primary (Course 2)
+    { id: 5, courseId: 2, name: 'Parts of Speech', topics: [10, 11, 12], order: 1 },
+    { id: 6, courseId: 2, name: 'Sentence Structure', topics: [13, 14], order: 2 },
+    
+    // EVS (Course 3)
+    { id: 7, courseId: 3, name: 'Plants and Animals', topics: [15, 16], order: 1 },
+    { id: 8, courseId: 3, name: 'Our Environment', topics: [17, 18], order: 2 },
+    
+    // Mathematics - Middle School (Course 4)
+    { id: 9, courseId: 4, name: 'Fractions and Decimals', topics: [1, 2, 3], order: 1 },
+    { id: 10, courseId: 4, name: 'Algebra Basics', topics: [19, 20], order: 2 },
+    { id: 11, courseId: 4, name: 'Geometry', topics: [21, 22], order: 3 },
+    
+    // Science - Middle School (Course 5)
+    { id: 12, courseId: 5, name: 'Matter and Materials', topics: [23, 24], order: 1 },
+    { id: 13, courseId: 5, name: 'Living Organisms', topics: [25, 26], order: 2 },
+    { id: 14, courseId: 5, name: 'Energy and Motion', topics: [27, 28], order: 3 },
+    
+    // Social Studies (Course 6)
+    { id: 15, courseId: 6, name: 'History of India', topics: [29, 30], order: 1 },
+    { id: 16, courseId: 6, name: 'Geography Basics', topics: [31, 32], order: 2 },
+    
+    // Physics - Secondary (Course 7)
+    { id: 17, courseId: 7, name: 'Motion and Force', topics: [33, 34], order: 1 },
+    { id: 18, courseId: 7, name: 'Light and Electricity', topics: [35, 36], order: 2 },
+    
+    // Chemistry - Secondary (Course 8)
+    { id: 19, courseId: 8, name: 'Chemical Reactions', topics: [37, 38], order: 1 },
+    { id: 20, courseId: 8, name: 'Acids, Bases and Salts', topics: [39, 40], order: 2 },
+    
+    // Biology - Secondary (Course 9)
+    { id: 21, courseId: 9, name: 'Cell Structure', topics: [41, 42], order: 1 },
+    { id: 22, courseId: 9, name: 'Human Body Systems', topics: [43, 44], order: 2 },
+    
+    // Mathematics - Secondary (Course 10)
+    { id: 23, courseId: 10, name: 'Quadratic Equations', topics: [45, 46], order: 1 },
+    { id: 24, courseId: 10, name: 'Trigonometry', topics: [47, 48], order: 2 }
   ];
 
   const mockTopics = [

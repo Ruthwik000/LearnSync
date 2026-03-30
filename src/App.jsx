@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import Layout from './components/Layout';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentOnboarding from './pages/student/StudentOnboarding';
@@ -26,10 +27,8 @@ const AppRoutes = () => {
   const handleLogin = (user, role) => {
     switchRole(role);
     if (user.id === 'new') {
-      // New user - will go to onboarding with empty user
       updateCurrentUser({ id: 'new', onboarded: false });
     } else {
-      // Existing user - go to dashboard
       updateCurrentUser(user);
     }
   };
@@ -38,9 +37,15 @@ const AppRoutes = () => {
     updateCurrentUser(user);
   };
 
-  // If no user is logged in, show login page
+  // If no user is logged in, show landing page
   if (!currentUser) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
   // If student is not onboarded, show student onboarding
