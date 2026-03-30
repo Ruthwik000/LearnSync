@@ -13,7 +13,17 @@ const Students = () => {
   const [notes, setNotes] = useState('');
 
   const mentor = appData.mentors.find(m => m.id === currentUser?.id) || appData.mentors[0];
-  const assignedStudents = appData.students.filter(s => mentor.assignedStudents.includes(s.id));
+  const assignedStudents = appData.students.filter(s => {
+    // First try to match by mentor's assignedStudents array
+    if (mentor.assignedStudents && mentor.assignedStudents.includes(s.id)) {
+      return true;
+    }
+    // Fallback: check if student's mentorId matches this mentor
+    if (s.mentorId === mentor.id) {
+      return true;
+    }
+    return false;
+  });
 
   const handleViewDetails = (student) => {
     setSelectedStudent(student);

@@ -191,6 +191,23 @@ export const initializeMockData = () => {
       level: 'mastery',
       createdBy: 1,
       chapters: [23, 24]
+    },
+    // Professional Courses (Mastery Level)
+    {
+      id: 11,
+      name: 'Infosys Springboard - Spring Boot Fundamentals',
+      subject: 'Computer Science',
+      level: 'mastery',
+      createdBy: 1,
+      chapters: [25, 26, 27, 28]
+    },
+    {
+      id: 12,
+      name: 'Web Development Basics',
+      subject: 'Computer Science',
+      level: 'mastery',
+      createdBy: 1,
+      chapters: [29, 30]
     }
   ];
 
@@ -237,7 +254,17 @@ export const initializeMockData = () => {
     
     // Mathematics - Secondary (Course 10)
     { id: 23, courseId: 10, name: 'Quadratic Equations', topics: [45, 46], order: 1 },
-    { id: 24, courseId: 10, name: 'Trigonometry', topics: [47, 48], order: 2 }
+    { id: 24, courseId: 10, name: 'Trigonometry', topics: [47, 48], order: 2 },
+    
+    // Infosys Spring Boot Course (Course 11)
+    { id: 25, courseId: 11, name: 'Introduction to Spring Framework', topics: [49, 50, 51], order: 1 },
+    { id: 26, courseId: 11, name: 'Spring Boot Basics', topics: [52, 53, 54], order: 2 },
+    { id: 27, courseId: 11, name: 'REST APIs with Spring Boot', topics: [55, 56, 57], order: 3 },
+    { id: 28, courseId: 11, name: 'Database Integration', topics: [58, 59, 60], order: 4 },
+    
+    // Web Development (Course 12)
+    { id: 29, courseId: 12, name: 'HTML & CSS Fundamentals', topics: [61, 62, 63], order: 1 },
+    { id: 30, courseId: 12, name: 'JavaScript Basics', topics: [64, 65, 66], order: 2 }
   ];
 
   const mockTopics = [

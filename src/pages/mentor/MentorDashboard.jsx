@@ -7,6 +7,12 @@ const MentorDashboard = () => {
   
   const mentor = appData.mentors.find(m => m.id === currentUser?.id) || appData.mentors[0];
   
+  // Debug logging
+  console.log('MentorDashboard - Current User:', currentUser?.id);
+  console.log('MentorDashboard - Mentor:', mentor);
+  console.log('MentorDashboard - All Students:', appData.students);
+  console.log('MentorDashboard - Mentor Assigned Students:', mentor?.assignedStudents);
+  
   // Safety check for mentor data
   if (!mentor) {
     return (
@@ -18,9 +24,19 @@ const MentorDashboard = () => {
     );
   }
   
-  const assignedStudents = appData.students.filter(s => 
-    mentor.assignedStudents && mentor.assignedStudents.includes(s.id)
-  );
+  const assignedStudents = appData.students.filter(s => {
+    // First try to match by mentor's assignedStudents array
+    if (mentor.assignedStudents && mentor.assignedStudents.includes(s.id)) {
+      return true;
+    }
+    // Fallback: check if student's mentorId matches this mentor
+    if (s.mentorId === mentor.id) {
+      return true;
+    }
+    return false;
+  });
+  
+  console.log('MentorDashboard - Filtered Assigned Students:', assignedStudents);
   
   const pendingDoubts = appData.doubts.filter(d => 
     d.status === 'open' && 

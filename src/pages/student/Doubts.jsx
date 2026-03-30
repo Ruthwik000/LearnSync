@@ -17,19 +17,29 @@ const Doubts = () => {
   const student = appData.students.find(s => s.id === currentUser?.id) || appData.students[0];
   const myDoubts = appData.doubts.filter(d => d.studentId === student.id);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (formData.subject && formData.topic && formData.question) {
-      addDoubt({
+      const doubtData = {
         studentId: student.id,
         studentName: student.name,
+        mentorId: student.mentorId || null, // Add mentor ID
         subject: formData.subject,
         topic: formData.topic,
         level: student.level,
         question: formData.question,
+        status: 'open',
+        replies: [],
         date: new Date().toISOString().split('T')[0]
-      });
-      setFormData({ subject: '', topic: '', question: '' });
-      setShowModal(false);
+      };
+      
+      const result = await addDoubt(doubtData);
+      
+      if (result.success) {
+        setFormData({ subject: '', topic: '', question: '' });
+        setShowModal(false);
+      } else {
+        alert('Failed to submit doubt. Please try again.');
+      }
     }
   };
 
