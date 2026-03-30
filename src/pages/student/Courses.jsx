@@ -17,8 +17,65 @@ const Courses = () => {
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
 
+  const handleQuizCompletion = (quizResult) => {
+    // Update student progress with AI quiz results
+    const updatedStudent = {
+      ...student,
+      xp: student.xp + Math.floor(quizResult.score / 10), // Award XP based on score
+      completedTopics: quizResult.score >= 70 && !student.completedTopics.includes(quizResult.topic?.toLowerCase())
+        ? [...student.completedTopics, quizResult.topic.toLowerCase()]
+        : student.completedTopics
+    };
+
+    updateStudent(student.id, updatedStudent);
+    
+    // TODO: Notify mentor about quiz completion
+    console.log('Quiz completed - notify mentor:', {
+      studentId: student.id,
+      studentName: student.name,
+      topic: quizResult.topic,
+      score: quizResult.score,
+      mentorId: student.mentorId
+    });
+  };
+
   const student = appData.students.find(s => s.id === currentUser?.id) || appData.students[0];
-  const courses = appData.courses.filter(c => student.subjects.includes(c.subject));
+  
+  // Determine student level based on class
+  const getStudentLevel = (classValue) => {
+    const classNum = parseInt(classValue);
+    if (classNum >= 1 && classNum <= 5) return 'foundation';
+    if (classNum >= 6 && classNum <= 8) return 'growth';
+    return 'mastery'; // Classes 9-12
+  };
+  
+  const studentLevel = getStudentLevel(student.class);
+  
+  // Filter courses based on student's selected subjects AND appropriate level
+  const courses = appData.courses.filter(course => {
+    // First check if level matches
+    if (course.level !== studentLevel) return false;
+    
+    // Then check if any of the student's subjects match this course's subject
+    const matches = student.subjects.some(studentSubject => {
+      const courseSubj = course.subject.toLowerCase().trim();
+      const studentSubj = studentSubject.toLowerCase().trim();
+      
+      // Direct exact match: "Mathematics" === "Mathematics"
+      if (courseSubj === studentSubj) return true;
+      
+      // Handle Science subjects: "Physics" should match "Science (Physics)"
+      if (courseSubj.includes(`(${studentSubj})`)) return true;
+      
+      // Handle subject with level suffix: "Mathematics" matches "Mathematics - Primary"
+      // But only if it's the same base subject
+      if (courseSubj.startsWith(studentSubj + ' -') || courseSubj.startsWith(studentSubj + '-')) return true;
+      
+      return false;
+    });
+    
+    return matches;
+  });
 
   const handleTopicClick = (topic) => {
     setSelectedTopic(topic);
@@ -73,32 +130,59 @@ const Courses = () => {
       </div>
 
       {!selectedCourse ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {courses.map((course) => {
-            const chapters = appData.chapters.filter(ch => course.chapters.includes(ch.id));
-            const totalTopics = chapters.reduce((sum, ch) => sum + ch.topics.length, 0);
-            const completedTopics = student.completedTopics.length;
-            const progress = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
-
-            return (
-              <Card key={course.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-blue-50 rounded-xl">
-                    <BookOpen className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">{course.name}</h3>
-                </div>
-                <ProgressBar progress={progress} className="mb-3" />
-                <p className="text-gray-500 text-sm mb-4">
-                  {chapters.length} chapters • {totalTopics} topics
+        <>
+          {/* Debug info - remove after testing */}
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <p className="text-sm text-gray-700">
+              <strong>Debug Info:</strong> Class: {student.class} | Level: {studentLevel} | 
+              Subjects: {student.subjects.join(', ')} | 
+              Total Courses Available: {appData.courses.length} | 
+              Filtered Courses: {courses.length}
+            </p>
+          </div>
+          
+          {courses.length === 0 ? (
+            <Card>
+              <div className="text-center py-8">
+                <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Courses Available</h3>
+                <p className="text-gray-500">
+                  Courses for your selected subjects will appear here once they're created.
                 </p>
-                <Button onClick={() => setSelectedCourse(course)} className="w-full">
-                  Continue Learning
-                </Button>
-              </Card>
-            );
-          })}
-        </div>
+                <p className="text-sm text-gray-400 mt-2">
+                  Your subjects: {student.subjects.join(', ')}
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {courses.map((course) => {
+                const chapters = appData.chapters.filter(ch => course.chapters.includes(ch.id));
+                const totalTopics = chapters.reduce((sum, ch) => sum + ch.topics.length, 0);
+                const completedTopics = student.completedTopics.length;
+                const progress = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
+
+                return (
+                  <Card key={course.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-3 bg-blue-50 rounded-xl">
+                        <BookOpen className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900">{course.name}</h3>
+                    </div>
+                    <ProgressBar progress={progress} className="mb-3" />
+                    <p className="text-gray-500 text-sm mb-4">
+                      {chapters.length} chapters • {totalTopics} topics
+                    </p>
+                    <Button onClick={() => setSelectedCourse(course)} className="w-full">
+                      Continue Learning
+                    </Button>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </>
       ) : (
         <div>
           <Button variant="secondary" onClick={() => setSelectedCourse(null)} className="mb-4">
@@ -313,6 +397,8 @@ const Courses = () => {
         isOpen={showChatbot}
         onClose={() => setShowChatbot(false)}
         context={chatbotContext}
+        onQuizGenerated={handleQuizCompletion}
+        studentId={student.id}
       />
     </div>
   );

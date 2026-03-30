@@ -1,15 +1,27 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Home, BookOpen, Users, Calendar, HelpCircle, Bell, GraduationCap, Menu, X, LogOut, User } from 'lucide-react';
+import { Home, BookOpen, Users, Calendar, HelpCircle, BarChart3, Menu, X, LogOut, User, Sparkles } from 'lucide-react';
+import ChatbotPanel from './ChatbotPanel';
 
 const Layout = ({ children }) => {
-  const { currentRole, currentUser, updateCurrentUser } = useApp();
+  const { currentRole, currentUser, updateCurrentUser, updateStudent } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showChatbot, setShowChatbot] = useState(false);
   const location = useLocation();
 
   const handleLogout = () => {
     updateCurrentUser(null);
+  };
+
+  const handleQuizCompletion = (quizResult) => {
+    if (currentRole === 'student' && currentUser) {
+      const updatedStudent = {
+        ...currentUser,
+        xp: currentUser.xp + Math.floor(quizResult.score / 10),
+      };
+      updateStudent(currentUser.id, updatedStudent);
+    }
   };
 
   const navigation = {
@@ -18,7 +30,8 @@ const Layout = ({ children }) => {
       { name: 'Courses', icon: BookOpen, path: '/courses' },
       { name: 'Study Planner', icon: Calendar, path: '/study-plan' },
       { name: 'Doubts', icon: HelpCircle, path: '/doubts' },
-      { name: 'Profile', icon: User, path: '/profile' }
+      { name: 'Profile', icon: User, path: '/profile' },
+      { name: 'AI Tutor', icon: Sparkles, path: '#', action: () => setShowChatbot(true), special: true }
     ],
     mentor: [
       { name: 'Dashboard', icon: Home, path: '/mentor' },
@@ -50,6 +63,24 @@ const Layout = ({ children }) => {
         <nav className="px-4 space-y-2">
           {currentNav.map((item) => {
             const isActive = location.pathname === item.path;
+            
+            if (item.action) {
+              return (
+                <button
+                  key={item.name}
+                  onClick={item.action}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    item.special
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-medium">{item.name}</span>
+                </button>
+              );
+            }
+            
             return (
               <Link
                 key={item.name}
@@ -106,7 +137,15 @@ const Layout = ({ children }) => {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-6">
-          {children}
+          {currentRole === 'student' && showChatbot ? (
+            <ChatbotPanel
+              isOpen={showChatbot}
+              onQuizGenerated={handleQuizCompletion}
+              studentId={currentUser?.id}
+            />
+          ) : (
+            children
+          )}
         </div>
       </div>
     </div>
