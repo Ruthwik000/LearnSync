@@ -134,6 +134,15 @@ const LoginAuth = ({ onLogin }) => {
       email: 'anjali@demo.com',
       password: 'demo123',
       subjects: ['Math', 'Science']
+    },
+    {
+      name: 'Demo Admin',
+      role: 'admin',
+      emoji: '🛡️',
+      color: 'from-purple-500 to-indigo-600',
+      email: 'admin@demo.com',
+      password: 'demo123',
+      organization: 'LearnSync NGO'
     }
   ];
 
@@ -143,17 +152,26 @@ const LoginAuth = ({ onLogin }) => {
     
     try {
       // Bypass Firebase auth entirely for demo accounts
-      const mockUserData = {
-        id: `demo-${user.name.toLowerCase().replace(/[^a-z]/g, '')}`,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        onboarded: user.role === 'student' ? true : (user.role === 'mentor' ? true : true),
-        ...(user.age && { age: user.age }),
-        ...(user.class && { class: user.class }),
-        ...(user.level && { level: user.level }),
-        ...(user.subjects && { subjects: user.subjects }),
-      };
+      const mockUserData = user.role === 'admin'
+        ? {
+            id: 'admin',
+            name: user.name,
+            email: user.email,
+            role: 'admin',
+            onboarded: true,
+            organization: user.organization
+          }
+        : {
+            id: `demo-${user.name.toLowerCase().replace(/[^a-z]/g, '')}`,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            onboarded: true,
+            ...(user.age && { age: user.age }),
+            ...(user.class && { class: user.class }),
+            ...(user.level && { level: user.level }),
+            ...(user.subjects && { subjects: user.subjects }),
+          };
       
       onLogin(mockUserData, user.role);
     } catch {
@@ -194,6 +212,13 @@ const LoginAuth = ({ onLogin }) => {
                         </div>
                         <div className="text-xs opacity-75 capitalize mt-1">
                           {user.level} Mode
+                        </div>
+                      </>
+                    ) : user.role === 'admin' ? (
+                      <>
+                        <div className="text-sm opacity-90">NGO Administrator</div>
+                        <div className="text-xs opacity-75 mt-1">
+                          {user.organization} • Full Access
                         </div>
                       </>
                     ) : (
