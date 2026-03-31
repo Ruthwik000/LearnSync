@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import ChatbotPanel from '../../components/ChatbotPanel';
 
@@ -6,21 +6,21 @@ const AITutor = () => {
   const { currentUser } = useApp();
   
   // Initialize context from sessionStorage on mount
-  const [context, setContext] = useState(null);
-
-  useEffect(() => {
+  const [context] = useState(() => {
     const storedContext = sessionStorage.getItem('aiTutorContext');
     if (storedContext) {
       try {
         const parsed = JSON.parse(storedContext);
         console.log('AI Tutor loaded context:', parsed);
-        setContext(parsed);
         sessionStorage.removeItem('aiTutorContext');
+        return parsed;
       } catch (e) {
         console.error('Error parsing AI Tutor context:', e);
+        return null;
       }
     }
-  }, []);
+    return null;
+  });
 
   return (
     <div className="h-[calc(100vh-140px)] max-w-5xl mx-auto">

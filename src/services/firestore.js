@@ -53,6 +53,18 @@ export const createUser = async (userId, userData) => {
     return { success: true };
   } catch (error) {
     console.error('Error creating user:', error);
+    
+    // If quota exceeded, save to localStorage as fallback
+    if (error.code === 'resource-exhausted') {
+      console.warn('Firestore quota exceeded, using localStorage fallback');
+      try {
+        localStorage.setItem(`user_${userId}`, JSON.stringify(userData));
+        return { success: true, fallback: 'localStorage' };
+      } catch (storageError) {
+        console.error('localStorage fallback failed:', storageError);
+      }
+    }
+    
     return { success: false, error: error.message };
   }
 };
@@ -63,9 +75,27 @@ export const getUser = async (userId) => {
     if (docSnap.exists()) {
       return { success: true, data: { id: docSnap.id, ...docSnap.data() } };
     }
+    
+    // Try localStorage fallback
+    const localData = localStorage.getItem(`user_${userId}`);
+    if (localData) {
+      console.log('Loading user from localStorage fallback');
+      return { success: true, data: JSON.parse(localData), fallback: 'localStorage' };
+    }
+    
     return { success: false, error: 'User not found' };
   } catch (error) {
     console.error('Error getting user:', error);
+    
+    // If quota exceeded, try localStorage
+    if (error.code === 'resource-exhausted') {
+      const localData = localStorage.getItem(`user_${userId}`);
+      if (localData) {
+        console.log('Loading user from localStorage due to quota');
+        return { success: true, data: JSON.parse(localData), fallback: 'localStorage' };
+      }
+    }
+    
     return { success: false, error: error.message };
   }
 };
@@ -105,6 +135,19 @@ export const updateUser = async (userId, updates) => {
     return { success: true };
   } catch (error) {
     console.error('Error updating user:', error);
+    
+    // If quota exceeded, use localStorage fallback
+    if (error.code === 'resource-exhausted') {
+      console.warn('Firestore quota exceeded, using localStorage fallback');
+      try {
+        const existing = localStorage.getItem(`user_${userId}`);
+        const userData = existing ? JSON.parse(existing) : {};
+        localStorage.setItem(`user_${userId}`, JSON.stringify({ ...userData, ...updates }));
+        return { success: true, fallback: 'localStorage' };
+      } catch (storageError) {
+        console.error('localStorage fallback failed:', storageError);
+      }
+    }
     
     // If update fails, try to create the document instead
     if (error.code === 'not-found') {

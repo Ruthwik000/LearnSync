@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import Card from '../../components/Card';
-import Button from '../../components/Button';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { 
   CheckCircle2, BookOpen, Star, Briefcase, GraduationCap, ChevronRight, ChevronLeft, Award, User
 } from 'lucide-react';

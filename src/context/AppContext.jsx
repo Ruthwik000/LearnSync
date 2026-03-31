@@ -1,9 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../config/firebase';
 import * as firestoreService from '../services/firestore';
 import { storage } from '../utils/storage';
-import { seedFirestore, isDatabaseEmpty } from '../utils/seedFirestore';
 import {
   MOCK_APP_STUDENTS,
   MOCK_APP_MENTORS,
@@ -167,7 +164,19 @@ export const AppProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    loadInitialData();
+    let mounted = true;
+    
+    const initData = async () => {
+      if (mounted) {
+        await loadInitialData();
+      }
+    };
+    
+    initData();
+    
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const refreshData = async () => {
