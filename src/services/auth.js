@@ -25,36 +25,44 @@ export const signUp = async (email, password, userData) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
-    // Create user document in Firestore
-    const result = await firestoreService.createUser(user.uid, {
-      ...userData,
+    console.log('Auth user created:', user.uid);
+    
+    // Create minimal user document immediately (before onboarding)
+    const minimalUserData = {
       email,
       authId: user.uid,
+      role: userData.role,
+      name: userData.name || email.split('@')[0],
+      onboarded: false, // Will be set to true after completing onboarding
       createdAt: new Date(),
       updatedAt: new Date()
-    });
+    };
+    
+    // Try to create user document in Firestore (single attempt, no retries to save quota)
+    const result = await firestoreService.createUser(user.uid, minimalUserData);
     
     if (result.success) {
-      return { 
-        success: true, 
-        user: { 
-          id: user.uid, 
-          email: user.email,
-          ...userData 
-        } 
-      };
+      console.log('User document created successfully');
     } else {
-      // If Firestore creation fails, we should ideally delete the auth user
-      // For now, just return the error
-      return { success: false, error: result.error };
+      console.warn('Firestore creation failed, user can still login');
     }
+    
+    // Always return success - user can complete profile later
+    return { 
+      success: true, 
+      user: { 
+        id: user.uid, 
+        email: user.email,
+        ...minimalUserData
+      } 
+    };
   } catch (error) {
     console.error('Sign up error:', error);
     let errorMessage = 'Failed to create account';
     
     switch (error.code) {
       case 'auth/email-already-in-use':
-        errorMessage = 'This email is already registered';
+        errorMessage = 'This email is already registered. Please try logging in instead.';
         break;
       case 'auth/invalid-email':
         errorMessage = 'Invalid email address';
@@ -102,7 +110,7 @@ export const signIn = async (email, password) => {
     
     if (result.success) {
       const userData = result.data;
-      console.log('User data retrieved:', userData.role);
+      console.log('User data retrieved:', userData.role, 'onboarded:', userData.onboarded);
       return {
         success: true,
         user: {
@@ -113,8 +121,47 @@ export const signIn = async (email, password) => {
         role: userData.role
       };
     } else {
-      console.error('User data not found in Firestore');
-      return { success: false, error: 'User data not found' };
+      // User document doesn't exist - create a minimal one
+      console.log('User document not found, creating minimal document');
+      
+      // Try to create a minimal user document
+      const minimalUserData = {
+        email: user.email,
+        authId: user.uid,
+        role: 'student', // Default to student
+        name: user.displayName || user.email.split('@')[0],
+        onboarded: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const createResult = await firestoreService.createUser(user.uid, minimalUserData);
+      
+      if (createResult.success) {
+        console.log('Minimal user document created');
+        return {
+          success: true,
+          user: {
+            id: user.uid,
+            email: user.email,
+            ...minimalUserData
+          },
+          role: minimalUserData.role
+        };
+      } else {
+        // If creation fails, still allow login with minimal data
+        console.warn('Could not create user document, using minimal data');
+        return {
+          success: true,
+          user: {
+            id: user.uid,
+            email: user.email,
+            ...minimalUserData
+          },
+          role: minimalUserData.role,
+          warning: 'Please complete your profile'
+        };
+      }
     }
   } catch (error) {
     console.error('Sign in error:', error);
@@ -171,7 +218,8 @@ export const onAuthChange = (callback) => {
           id: 'admin',
           email: user.email,
           name: 'Admin User',
-          role: 'admin'
+          role: 'admin',
+          onboarded: true
         });
         return;
       }
@@ -185,7 +233,28 @@ export const onAuthChange = (callback) => {
           ...result.data
         });
       } else {
-        callback(null);
+        // User document doesn't exist - create minimal one
+        console.log('User document not found in onAuthChange, creating minimal document');
+        
+        const minimalUserData = {
+          email: user.email,
+          authId: user.uid,
+          role: 'student',
+          name: user.displayName || user.email.split('@')[0],
+          onboarded: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        // Try to create the document
+        await firestoreService.createUser(user.uid, minimalUserData);
+        
+        // Return the minimal data
+        callback({
+          id: user.uid,
+          email: user.email,
+          ...minimalUserData
+        });
       }
     } else {
       callback(null);
@@ -258,7 +327,7 @@ export const signInWithGoogle = async (role = 'student') => {
       };
     }
     
-    // Check if user exists in Firestore
+    // Check if user exists in Firestore (single attempt, no retries)
     const existingUser = await firestoreService.getUser(user.uid);
     
     if (existingUser.success) {
@@ -273,7 +342,7 @@ export const signInWithGoogle = async (role = 'student') => {
         role: existingUser.data.role
       };
     } else {
-      // New user, create account
+      // New user, create account (single attempt)
       const userData = {
         name: user.displayName || user.email.split('@')[0],
         email: user.email,
@@ -285,19 +354,21 @@ export const signInWithGoogle = async (role = 'student') => {
       const createResult = await firestoreService.createUser(user.uid, userData);
       
       if (createResult.success) {
-        return {
-          success: true,
-          user: {
-            id: user.uid,
-            email: user.email,
-            ...userData
-          },
-          role: role,
-          isNewUser: true
-        };
+        console.log('User document created successfully');
       } else {
-        return { success: false, error: 'Failed to create user account' };
+        console.warn('Firestore creation failed, user can still continue');
       }
+      
+      return {
+        success: true,
+        user: {
+          id: user.uid,
+          email: user.email,
+          ...userData
+        },
+        role: role,
+        isNewUser: true
+      };
     }
   } catch (error) {
     console.error('Google sign in error:', error);

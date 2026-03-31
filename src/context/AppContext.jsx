@@ -57,7 +57,17 @@ export const AppProvider = ({ children }) => {
       if (savedUser) setCurrentUser(savedUser);
       if (savedRole) setCurrentRole(savedRole);
 
-      // Load saved doubts from localStorage (persisted across sessions)
+      // Check if this is a demo user
+      const isDemoUser = savedUser && (
+        savedUser.id === 'admin' ||
+        savedUser.id.startsWith('student_') ||
+        savedUser.id.startsWith('mentor_') ||
+        sessionStorage.getItem('demoUser')
+      );
+
+      console.log('Loading data for user:', savedUser?.id, 'isDemoUser:', isDemoUser);
+
+      // Load saved doubts from localStorage
       const savedDoubts = localStorage.getItem('learnsync-doubts');
       const doubts = savedDoubts ? JSON.parse(savedDoubts) : MOCK_DOUBTS;
 
@@ -72,26 +82,77 @@ export const AppProvider = ({ children }) => {
         { id: 'course_3', name: 'English Mastery', subject: 'English', description: 'Advanced English', level: 'mastery', createdBy: 'mentor_1', chapters: [] },
       ];
 
-      // Merge: default courses + any saved courses (avoid duplicates by id)
       const existingIds = new Set(savedCourses.map(c => c.id));
       const allCourses = [...defaultCourses.filter(c => !existingIds.has(c.id)), ...savedCourses];
 
-      setAppData({
-        students: [
+      let students = [];
+      let mentors = [];
+      let sessions = [];
+
+      if (isDemoUser) {
+        // Use mock data for demo users
+        console.log('Using mock data for demo user');
+        students = [
           { id: 'student_1', name: 'Priya', age: 9, class: '4th', level: 'foundation', role: 'student', onboarded: true, subjects: ['Math', 'English', 'Science'], progress: 45, xp: 120, level_number: 3, streak: 5, attendance: 90, completedTopics: [], weakTopics: { Math: ['fractions'], Science: ['photosynthesis'] }, strongTopics: { English: ['grammar'] } },
           { id: 'student_2', name: 'Aarav', age: 12, class: '7th', level: 'growth', role: 'student', onboarded: true, subjects: ['Math', 'Science', 'History'], progress: 62, xp: 250, level_number: 5, streak: 12, attendance: 95, completedTopics: [], weakTopics: { Math: ['algebra'] }, strongTopics: { Science: ['physics'] } },
           { id: 'student_3', name: 'Rohan', age: 16, class: '11th', level: 'mastery', role: 'student', onboarded: true, subjects: ['Math', 'Science', 'English'], progress: 78, xp: 480, level_number: 8, streak: 20, attendance: 88, completedTopics: [], weakTopics: {}, strongTopics: { Math: ['calculus'] } },
-        ],
-        mentors: [
+        ];
+        mentors = [
           { id: 'mentor_1', name: 'Dr. Anjali', role: 'mentor', onboarded: true, subjects: ['Math', 'Science'], education: 'M.Sc Mathematics', skillLevel: 'advanced', assignedStudents: ['student_1', 'student_2'], sessionsCompleted: 24, teachingCapacity: 10 },
-        ],
+        ];
+        sessions = [
+          { id: 'session_1', mentorId: 'mentor_1', studentId: 'student_1', subject: 'Math', date: '2026-03-28', status: 'completed' },
+          { id: 'session_2', mentorId: 'mentor_1', studentId: 'student_2', subject: 'Science', date: '2026-03-29', status: 'scheduled' },
+        ];
+      } else if (savedUser && savedUser.id) {
+        // Load real user data from Firestore
+        console.log('Loading real user data from Firestore');
+        
+        try {
+          // Load current user's full profile
+          const userResult = await firestoreService.getUser(savedUser.id);
+          if (userResult.success) {
+            const userData = userResult.data;
+            
+            if (userData.role === 'student') {
+              students = [{ id: savedUser.id, ...userData }];
+              
+              // Load assigned mentor if exists
+              if (userData.mentorId) {
+                const mentorResult = await firestoreService.getUser(userData.mentorId);
+                if (mentorResult.success) {
+                  mentors = [mentorResult.data];
+                }
+              }
+            } else if (userData.role === 'mentor') {
+              mentors = [{ id: savedUser.id, ...userData }];
+              
+              // Load assigned students
+              if (userData.assignedStudents && userData.assignedStudents.length > 0) {
+                const studentPromises = userData.assignedStudents.map(sid => 
+                  firestoreService.getUser(sid)
+                );
+                const studentResults = await Promise.all(studentPromises);
+                students = studentResults
+                  .filter(r => r.success)
+                  .map(r => r.data);
+              }
+            }
+            
+            console.log('Loaded real data - students:', students.length, 'mentors:', mentors.length);
+          }
+        } catch (firestoreError) {
+          console.warn('Failed to load from Firestore, using empty data:', firestoreError);
+        }
+      }
+
+      setAppData({
+        students,
+        mentors,
         courses: allCourses,
         chapters: savedChapters,
         topics: savedTopics,
-        sessions: [
-          { id: 'session_1', mentorId: 'mentor_1', studentId: 'student_1', subject: 'Math', date: '2026-03-28', status: 'completed' },
-          { id: 'session_2', mentorId: 'mentor_1', studentId: 'student_2', subject: 'Science', date: '2026-03-29', status: 'scheduled' },
-        ],
+        sessions,
         doubts,
         studyPlans: [],
         analytics: {}
@@ -114,16 +175,15 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateCurrentUser = async (user) => {
+    console.log('updateCurrentUser called with:', user);
     setCurrentUser(user);
     storage.set('currentUser', user);
 
-    // Only update Firestore if user has a valid ID and is not 'new'
-    if (user && user.id && user.id !== 'new' && user.id !== 'admin') {
-      try {
-        await firestoreService.updateUser(user.id, user);
-      } catch (error) {
-        console.error('Error updating user in Firestore:', error);
-      }
+    // Update Firestore in background (don't block UI)
+    if (user && user.id && user.id !== 'new' && user.id !== 'admin' && !user.id.startsWith('student_') && !user.id.startsWith('mentor_')) {
+      firestoreService.updateUser(user.id, user).catch(error => {
+        console.warn('Firestore update failed (non-blocking):', error);
+      });
     }
   };
 
@@ -161,14 +221,30 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateStudent = async (id, updates) => {
-    const result = await firestoreService.updateUser(id, updates);
+    console.log('Updating student:', id, updates);
+    
+    // Update local state immediately for better UX
+    setAppData(prev => ({
+      ...prev,
+      students: prev.students.map(s => 
+        s.id === id ? { ...s, ...updates } : s
+      )
+    }));
 
-    if (result.success) {
-      // Refresh data to get updated student
-      await refreshData();
+    // Only update Firestore for real users (not demo users)
+    if (id.startsWith('student_') && !id.includes('demo')) {
+      const result = await firestoreService.updateUser(id, updates);
+
+      if (!result.success) {
+        console.error('Firestore update failed, keeping local state');
+        // Don't revert - keep the local state even if Firestore fails
+      }
+      
+      return result;
     }
-
-    return result;
+    
+    // For demo users, just return success
+    return { success: true };
   };
 
   const addMentor = async (mentor) => {

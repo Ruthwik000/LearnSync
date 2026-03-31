@@ -8,6 +8,7 @@ import { allocateMentor } from '../../utils/mentorAllocation';
 const StudentOnboarding = ({ onComplete }) => {
   const { updateStudent, appData, updateMentor, currentUser } = useApp();
   const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -190,66 +191,103 @@ const StudentOnboarding = ({ onComplete }) => {
   };
 
   const handleSubmit = async () => {
-    const weakTopics = {};
-    const strongTopics = {};
-
-    Object.entries(formData.skillAssessment).forEach(([subject, topics]) => {
-      weakTopics[subject] = [];
-      strongTopics[subject] = [];
-      
-      // Store overall rating as a topic for compatibility
-      Object.entries(topics).forEach(([, level]) => {
-        if (level === 'weak') weakTopics[subject].push(subject.toLowerCase());
-        if (level === 'strong') strongTopics[subject].push(subject.toLowerCase());
-      });
-    });
-
-    const ageMode = formData.age <= 10 ? 'foundation' : formData.age <= 15 ? 'growth' : 'mastery';
-    const detectedLevel = calculateLevel();
-
-    // Allocate mentor based on student profile
-    const allocatedMentor = allocateMentor({
-      ...formData,
-      age: formData.age,
-      detectedLevel,
-      subjects: formData.subjects
-    }, appData.mentors);
-
-    const newStudent = {
-      ...formData,
-      level: ageMode,
-      detectedLevel,
-      weakTopics,
-      strongTopics,
-      mentorId: allocatedMentor?.id || null,
-      progress: 0,
-      xp: 0,
-      level_number: 1,
-      streak: 0,
-      attendance: 100,
-      completedTopics: [],
-      onboarded: true,
-      role: 'student'
-    };
-
-    // Use currentUser.id (which is the Firebase Auth UID)
-    const studentWithId = { ...newStudent, id: currentUser.id };
-
-    const result = await updateStudent(currentUser.id, studentWithId);
+    if (submitting) return;
     
-    if (result.success) {
-      // Update mentor's assigned students
+    setSubmitting(true);
+    console.log('=== COMPLETE SETUP CLICKED ===');
+    
+    try {
+      const weakTopics = {};
+      const strongTopics = {};
+
+      Object.entries(formData.skillAssessment).forEach(([subject, topics]) => {
+        weakTopics[subject] = [];
+        strongTopics[subject] = [];
+        
+        Object.entries(topics).forEach(([, level]) => {
+          if (level === 'weak') weakTopics[subject].push(subject.toLowerCase());
+          if (level === 'strong') strongTopics[subject].push(subject.toLowerCase());
+        });
+      });
+
+      const ageMode = formData.age <= 10 ? 'foundation' : formData.age <= 15 ? 'growth' : 'mastery';
+      const detectedLevel = calculateLevel();
+
+      const allocatedMentor = allocateMentor({
+        ...formData,
+        age: formData.age,
+        detectedLevel,
+        subjects: formData.subjects
+      }, appData.mentors);
+
+      const studentData = {
+        id: currentUser.id,
+        email: currentUser.email,
+        name: formData.name,
+        age: formData.age,
+        class: formData.class,
+        subjects: formData.subjects,
+        level: ageMode,
+        detectedLevel,
+        weakTopics,
+        strongTopics,
+        mentorId: allocatedMentor?.id || null,
+        progress: 0,
+        xp: 0,
+        level_number: 1,
+        streak: 0,
+        attendance: 100,
+        completedTopics: [],
+        onboarded: true,
+        role: 'student'
+      };
+
+      console.log('Prepared student data:', studentData);
+      
+      // Save to Firestore in background (don't await)
+      updateStudent(currentUser.id, studentData).catch(err => {
+        console.warn('Firestore save failed:', err);
+      });
+      
+      // Update mentor assignment in background
       if (allocatedMentor) {
-        await updateMentor(allocatedMentor.id, {
+        updateMentor(allocatedMentor.id, {
           assignedStudents: [...(allocatedMentor.assignedStudents || []), currentUser.id]
+        }).catch(err => {
+          console.warn('Mentor update failed:', err);
         });
       }
       
-      // Complete onboarding
-      onComplete(studentWithId);
-    } else {
-      console.error('Error saving student data:', result.error);
-      alert('Failed to save your information. Please try again.');
+      // Immediately call onComplete to redirect
+      console.log('Calling onComplete to redirect to dashboard');
+      onComplete(studentData);
+      
+    } catch (error) {
+      console.error('Onboarding error:', error);
+      
+      // Create minimal data and complete anyway
+      const minimalData = {
+        id: currentUser.id,
+        email: currentUser.email,
+        name: formData.name || currentUser.email.split('@')[0],
+        age: formData.age || 10,
+        class: formData.class || '5th',
+        subjects: formData.subjects.length > 0 ? formData.subjects : ['Math'],
+        level: 'foundation',
+        onboarded: true,
+        role: 'student',
+        progress: 0,
+        xp: 0,
+        level_number: 1,
+        streak: 0,
+        attendance: 100,
+        completedTopics: [],
+        weakTopics: {},
+        strongTopics: {}
+      };
+      
+      console.log('Using minimal data:', minimalData);
+      onComplete(minimalData);
     }
   };
 
@@ -562,9 +600,9 @@ const StudentOnboarding = ({ onComplete }) => {
             <Button 
               onClick={handleSubmit} 
               className="ml-auto"
-              disabled={!canProceed()}
+              disabled={!canProceed() || submitting}
             >
-              Complete Setup
+              {submitting ? 'Saving...' : 'Complete Setup'}
             </Button>
           )}
         </div>

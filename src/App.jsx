@@ -93,7 +93,10 @@ const AppRoutes = () => {
   };
 
   const handleOnboardingComplete = (user) => {
-    updateCurrentUser(user);
+    console.log('Onboarding complete, updating user:', user);
+    // Ensure the user has onboarded flag set to true
+    const updatedUser = { ...user, onboarded: true };
+    updateCurrentUser(updatedUser);
   };
 
   const handleLogout = async () => {

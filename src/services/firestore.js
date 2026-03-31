@@ -37,11 +37,19 @@ export const createUser = async (userId, userData) => {
     const dataToSave = { ...userData };
     delete dataToSave.id; // Remove id from data, it's the document ID
     
+    // Remove undefined values which Firestore doesn't accept
+    Object.keys(dataToSave).forEach(key => {
+      if (dataToSave[key] === undefined) {
+        delete dataToSave[key];
+      }
+    });
+    
     await setDoc(doc(db, 'users', userId), {
       ...dataToSave,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true }); // Use merge to avoid overwriting existing data
+    
     return { success: true };
   } catch (error) {
     console.error('Error creating user:', error);
@@ -67,13 +75,56 @@ export const updateUser = async (userId, updates) => {
     const cleanUpdates = { ...updates };
     delete cleanUpdates.id; // Remove id from updates
     
-    await updateDoc(doc(db, 'users', userId), {
-      ...cleanUpdates,
-      updatedAt: serverTimestamp()
+    // Remove undefined values which Firestore doesn't accept
+    Object.keys(cleanUpdates).forEach(key => {
+      if (cleanUpdates[key] === undefined) {
+        delete cleanUpdates[key];
+      }
     });
+    
+    // Check if document exists first
+    const docRef = doc(db, 'users', userId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      // If document doesn't exist, create it with setDoc
+      console.log('User document does not exist, creating new one');
+      await setDoc(docRef, {
+        ...cleanUpdates,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } else {
+      // Document exists, update it
+      await updateDoc(docRef, {
+        ...cleanUpdates,
+        updatedAt: serverTimestamp()
+      });
+    }
+    
     return { success: true };
   } catch (error) {
     console.error('Error updating user:', error);
+    
+    // If update fails, try to create the document instead
+    if (error.code === 'not-found') {
+      try {
+        const cleanUpdates = { ...updates };
+        delete cleanUpdates.id;
+        
+        await setDoc(doc(db, 'users', userId), {
+          ...cleanUpdates,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
+        return { success: true };
+      } catch (createError) {
+        console.error('Error creating user after update failed:', createError);
+        return { success: false, error: createError.message };
+      }
+    }
+    
     return { success: false, error: error.message };
   }
 };

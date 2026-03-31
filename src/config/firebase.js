@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -43,9 +43,23 @@ try {
   app = initializeApp(firebaseConfig);
   console.log('✅ Firebase initialized successfully');
 
-  // Initialize Firestore
+  // Initialize Firestore with settings to reduce quota usage
   db = getFirestore(app);
-  console.log('✅ Firestore initialized successfully');
+  
+  // Enable offline persistence to reduce network requests
+  enableIndexedDbPersistence(db, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED
+  }).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('⚠️ Persistence failed: Multiple tabs open');
+    } else if (err.code === 'unimplemented') {
+      console.warn('⚠️ Persistence not available in this browser');
+    } else {
+      console.error('❌ Persistence error:', err);
+    }
+  });
+  
+  console.log('✅ Firestore initialized with offline persistence');
 
   // Initialize Auth
   auth = getAuth(app);

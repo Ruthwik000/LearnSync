@@ -35,23 +35,56 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
+// Fetch event - network first, fallback to cache for GET requests only
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const { method, url } = request;
+
+  // Skip caching for:
+  // 1. Non-GET requests (POST, PUT, DELETE, etc.)
+  // 2. Firebase/Firestore API requests
+  // 3. Chrome extensions
+  // 4. External APIs
+  if (
+    method !== 'GET' ||
+    url.includes('firestore.googleapis.com') ||
+    url.includes('firebase') ||
+    url.includes('googleapis.com') ||
+    url.includes('chrome-extension') ||
+    url.startsWith('chrome-extension:')
+  ) {
+    // Just fetch without caching
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // For GET requests of app resources, use network-first strategy
   event.respondWith(
-    fetch(event.request)
+    fetch(request)
       .then((response) => {
+        // Only cache successful responses
+        if (!response || response.status !== 200 || response.type === 'error') {
+          return response;
+        }
+
         // Clone the response
         const responseToCache = response.clone();
         
+        // Cache in background (don't await)
         caches.open(CACHE_NAME)
           .then((cache) => {
-            cache.put(event.request, responseToCache);
+            cache.put(request, responseToCache);
+          })
+          .catch((err) => {
+            // Silently fail cache operations
+            console.log('Cache put failed:', err.message);
           });
         
         return response;
       })
       .catch(() => {
-        return caches.match(event.request);
+        // Network failed, try cache
+        return caches.match(request);
       })
   );
 });

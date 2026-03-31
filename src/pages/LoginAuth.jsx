@@ -373,6 +373,54 @@ const LoginAuth = ({ onLogin }) => {
               </p>
             </div>
           </div>
+
+          {/* Mobile Demo Accounts - Only visible on mobile */}
+          <div className="lg:hidden mt-8 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Try Demo Accounts</h3>
+              <p className="text-xs text-gray-600">
+                Explore LearnSync with pre-configured demo profiles
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {mockUsers.map((user) => {
+                const UserIcon = IconMap[user.iconType] || GraduationCap;
+                
+                return (
+                  <button
+                    key={user.id}
+                    onClick={() => handleMockLogin(user)}
+                    disabled={loading}
+                    className="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 hover:border-gray-300 hover:bg-gray-100 transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
+                        <UserIcon className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-gray-900">{user.name}</div>
+                        {user.role === 'student' ? (
+                          <div className="text-xs text-gray-500">
+                            Student • Class {user.class}
+                          </div>
+                        ) : user.role === 'mentor' ? (
+                          <div className="text-xs text-gray-500">
+                            Mentor • {user.subjects[0]}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500">
+                            Administrator
+                          </div>
+                        )}
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
