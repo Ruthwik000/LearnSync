@@ -1,468 +1,317 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import Card from '../../components/Card';
-import ProgressBar from '../../components/ProgressBar';
-import Button from '../../components/Button';
-import { BookOpen, TrendingUp, Zap, Star, Flame, Trophy, Award, Target } from 'lucide-react';
+import { 
+  FaStar, FaRocket, FaFlagCheckered, FaTrophy, FaFire, 
+  FaBookOpen, FaGamepad, FaArrowRight, FaChartLine, FaClipboardList,
+  FaLightbulb, FaUserAstronaut, FaDice, FaChevronRight, FaBolt, FaMagic, FaGraduationCap
+} from 'react-icons/fa';
 
-// Foundation Mode (5-10 years) - Big, colorful, fun, super gamified
-const FoundationDashboard = ({ student, studyPlan, courses }) => {
-  const nextLevelXP = 1000;
-  const progressPercent = (student.xp / nextLevelXP) * 100;
+// Foundation Mode (Age 5–10): "Tactile Playground" interface
+const FoundationDashboard = ({ student, courses }) => {
+  const { currentUser } = useApp();
+  const mascotUrl = "file:///C:/Users/Siddharth/.gemini/antigravity/brain/390ba4a9-35c2-4534-9a06-b69c6a5ab22c/learnsync_mascot_1774913410131.png";
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      {/* Big Welcome with Rocket */}
-      <div className="text-center bg-gradient-to-r from-purple-100 via-pink-100 to-yellow-100 rounded-3xl p-6 md:p-8">
-        <div className="text-6xl md:text-8xl mb-3">🚀</div>
-        <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2">
-          Hi {student.name}!
-        </h1>
-        <div className="inline-flex items-center gap-2 bg-yellow-400 px-4 md:px-6 py-2 md:py-3 rounded-full">
-          <Trophy className="w-5 h-5 md:w-6 md:h-6 text-yellow-900" />
-          <span className="text-lg md:text-2xl font-bold text-yellow-900">Level {student.level_number}</span>
+    <div className="space-y-10 animate-in fade-in duration-700 font-plus-jakarta pb-20">
+      {/* Mascot Hero */}
+      <div className="relative bg-white rounded-[3rem] p-8 md:p-12 shadow-juicy border-4 border-white flex flex-col md:flex-row items-center gap-10 overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-100 rounded-full -mr-20 -mt-20 blur-3xl opacity-50 group-hover:opacity-80 transition-opacity"></div>
+        <div className="relative shrink-0 w-56 h-56 animate-bounce-slow">
+            <img 
+               src={mascotUrl} 
+               alt="Mascot"
+               className="w-full h-full object-contain filter drop-shadow-2xl"
+               onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://cdn-icons-png.flaticon.com/512/3588/3588636.png"; 
+               }}
+            />
         </div>
-      </div>
-
-      {/* Level Progress Bar - Big and Colorful */}
-      <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border-4 border-purple-200">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-base md:text-lg font-bold text-gray-700">Next Level</span>
-          <span className="text-base md:text-lg font-bold text-purple-600">{student.xp} / {nextLevelXP} ⭐</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-6 md:h-8 relative overflow-hidden">
-          <div 
-            className="bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
-            style={{ width: `${progressPercent}%` }}
-          >
-            <span className="text-white font-bold text-xs md:text-sm">🎯</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Big Stats with Animations */}
-      <div className="grid grid-cols-2 gap-4 md:gap-6">
-        <div className="bg-gradient-to-br from-yellow-400 to-orange-400 rounded-3xl p-6 md:p-8 text-center shadow-xl transform hover:scale-105 transition-transform">
-          <div className="text-5xl md:text-6xl mb-2">⭐</div>
-          <p className="text-3xl md:text-4xl font-bold text-white mb-1">{student.xp}</p>
-          <p className="text-base md:text-lg text-yellow-100 font-semibold">Stars</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-orange-400 to-red-400 rounded-3xl p-6 md:p-8 text-center shadow-xl transform hover:scale-105 transition-transform">
-          <div className="text-5xl md:text-6xl mb-2">🔥</div>
-          <p className="text-3xl md:text-4xl font-bold text-white mb-1">{student.streak}</p>
-          <p className="text-base md:text-lg text-orange-100 font-semibold">Day Streak</p>
-        </div>
-      </div>
-
-      {/* Today's Missions - Colorful Cards */}
-      {studyPlan && studyPlan.tasks && studyPlan.tasks.length > 0 && (
-        <div className="bg-white rounded-3xl p-4 md:p-6 shadow-lg border-4 border-blue-200">
-          <div className="flex items-center gap-3 mb-4 md:mb-6">
-            <div className="text-4xl md:text-5xl">🎯</div>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Today's Missions</h2>
-          </div>
-          <div className="space-y-3 md:space-y-4">
-            {studyPlan.tasks.slice(0, 3).map((task, index) => (
-              <div key={task.id} className={`flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-2xl border-4 ${
-                index === 0 ? 'bg-blue-100 border-blue-400' :
-                index === 1 ? 'bg-green-100 border-green-400' :
-                'bg-purple-100 border-purple-400'
-              } transform hover:scale-102 transition-transform`}>
-                <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-2xl md:text-3xl ${
-                  index === 0 ? 'bg-blue-400' :
-                  index === 1 ? 'bg-green-400' :
-                  'bg-purple-400'
-                }`}>
-                  {task.completed ? '✅' : '⭐'}
-                </div>
-                <div className="flex-1">
-                  <p className="text-base md:text-xl font-bold text-gray-900">{task.task}</p>
-                  <p className="text-sm md:text-lg font-semibold text-yellow-600">+{task.xp} Stars</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button className="mt-4 md:mt-6 w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white text-lg md:text-xl font-bold py-4 md:py-5 rounded-2xl hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg">
-            Start Learning! 🚀
-          </button>
-        </div>
-      )}
-
-      {/* My Courses - Big Colorful Cards */}
-      {courses && courses.length > 0 && (
-        <div>
-          <div className="flex items-center gap-3 mb-4 md:mb-6">
-            <div className="text-4xl md:text-5xl">📚</div>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">My Learning</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:gap-6">
-            {courses.slice(0, 3).map((course, index) => (
-              <div key={course.id} className={`rounded-3xl p-5 md:p-6 shadow-xl border-4 transform hover:scale-102 transition-transform ${
-                index === 0 ? 'bg-gradient-to-br from-pink-100 to-purple-100 border-pink-300' :
-                index === 1 ? 'bg-gradient-to-br from-blue-100 to-cyan-100 border-blue-300' :
-                'bg-gradient-to-br from-green-100 to-yellow-100 border-green-300'
-              }`}>
-                <div className="flex items-center gap-3 md:gap-4 mb-4">
-                  <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-3xl md:text-4xl ${
-                    index === 0 ? 'bg-pink-300' :
-                    index === 1 ? 'bg-blue-300' :
-                    'bg-green-300'
-                  }`}>
-                    {index === 0 ? '🎨' : index === 1 ? '🔢' : '🌍'}
-                  </div>
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{course.name}</h3>
-                </div>
-                <div className="mb-4">
-                  <div className="w-full bg-white rounded-full h-5 md:h-6 border-2 border-gray-300">
-                    <div className={`h-full rounded-full ${
-                      index === 0 ? 'bg-gradient-to-r from-pink-400 to-purple-400' :
-                      index === 1 ? 'bg-gradient-to-r from-blue-400 to-cyan-400' :
-                      'bg-gradient-to-r from-green-400 to-yellow-400'
-                    }`} style={{ width: '60%' }}></div>
-                  </div>
-                </div>
-                <button className={`w-full text-base md:text-lg font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 ${
-                  index === 0 ? 'bg-pink-400 hover:bg-pink-500 text-white' :
-                  index === 1 ? 'bg-blue-400 hover:bg-blue-500 text-white' :
-                  'bg-green-400 hover:bg-green-500 text-white'
-                }`}>
-                  Continue Learning 🎯
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Achievements Section */}
-      <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-3xl p-4 md:p-6 border-4 border-yellow-300">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="text-4xl md:text-5xl">🏆</div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">My Badges</h2>
-        </div>
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
-          {[
-            { emoji: '🌟', name: 'First Star', unlocked: true },
-            { emoji: '🔥', name: '7 Day Streak', unlocked: student.streak >= 7 },
-            { emoji: '📚', name: 'Bookworm', unlocked: true },
-            { emoji: '🎯', name: 'Perfect Score', unlocked: false },
-            { emoji: '⚡', name: 'Speed Learner', unlocked: false },
-            { emoji: '🚀', name: 'Rocket', unlocked: false },
-          ].map((badge, index) => (
-            <div key={index} className={`text-center p-3 md:p-4 rounded-2xl ${
-              badge.unlocked ? 'bg-white border-4 border-yellow-400' : 'bg-gray-200 border-4 border-gray-300 opacity-50'
-            }`}>
-              <div className="text-3xl md:text-4xl mb-1">{badge.emoji}</div>
-              <p className="text-xs md:text-sm font-bold text-gray-700">{badge.name}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Growth Mode (11-14 years) - Gamified with XP and badges
-const GrowthDashboard = ({ student, studyPlan, courses }) => {
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Welcome with Level */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
-            Welcome back, {student.name}!
+        <div className="relative flex-1 text-center md:text-left">
+          <span className="inline-block px-6 py-2 bg-[#6200ea] text-white rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-lg shadow-purple-200">
+             Mission Control
+          </span>
+          <h1 className="text-4xl md:text-6xl font-black text-gray-900 leading-tight mb-4">
+             Welcome back, <br />
+             <span className="text-[#6200ea] decoration-wavy underline decoration-yellow-400">{currentUser?.name || student.name}!</span>
           </h1>
-          <p className="text-sm sm:text-lg text-blue-600 mt-1">Growth Mode - Level {student.level_number}</p>
-        </div>
-        <div className="sm:text-right">
-          <p className="text-xs sm:text-sm text-gray-500">Next Level</p>
-          <div className="w-full sm:w-48 bg-gray-200 rounded-full h-2.5 sm:h-3 mt-1">
-            <div className="bg-blue-600 h-full rounded-full" style={{ width: '70%' }}></div>
+          <p className="text-lg text-gray-500 font-bold mb-8 max-w-lg">
+             You have <span className="text-yellow-500">3 new missions</span> waiting for you today. Let's start the adventure!
+          </p>
+          <div className="flex flex-wrap justify-center md:justify-start gap-4">
+             <Link 
+               to="/courses"
+               className="px-10 py-5 bg-[#ffca18] text-gray-900 rounded-[2rem] font-black text-lg shadow-[0_12px_0_#d4a017] hover:translate-y-1 hover:shadow-[0_8px_0_#d4a017] active:translate-y-2 active:shadow-none transition-all flex items-center gap-3"
+             >
+               <FaGamepad /> START MISSION
+             </Link>
+             <div className="px-8 py-5 bg-white border-4 border-gray-100 rounded-[2rem] flex items-center gap-4 group-hover:scale-105 transition-transform">
+               <div className="flex gap-1">
+                 {[1,2,3,4,5].map(i => (
+                   <FaStar key={i} className={i <= 4 ? "text-yellow-400" : "text-gray-200"} size={22} />
+                 ))}
+               </div>
+               <span className="font-black text-gray-400 text-sm">4/5 STARS</span>
+             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-1">{student.xp} / 1000 XP</p>
         </div>
       </div>
 
-      {/* XP Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="text-center p-3 sm:p-4">
-          <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mx-auto mb-1 sm:mb-2" />
-          <p className="text-xl sm:text-3xl font-bold text-gray-900">{student.xp}</p>
-          <p className="text-xs sm:text-sm text-gray-500">Total XP</p>
-        </Card>
-
-        <Card className="text-center p-3 sm:p-4">
-          <Flame className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600 mx-auto mb-1 sm:mb-2" />
-          <p className="text-xl sm:text-3xl font-bold text-gray-900">{student.streak}</p>
-          <p className="text-xs sm:text-sm text-gray-500">Day Streak</p>
-        </Card>
-
-        <Card className="text-center p-3 sm:p-4">
-          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-1 sm:mb-2" />
-          <p className="text-xl sm:text-3xl font-bold text-gray-900">{student.progress}%</p>
-          <p className="text-xs sm:text-sm text-gray-500">Progress</p>
-        </Card>
-
-        <Card className="text-center p-3 sm:p-4">
-          <Award className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mx-auto mb-1 sm:mb-2" />
-          <p className="text-xl sm:text-3xl font-bold text-gray-900">{student.level_number}</p>
-          <p className="text-xs sm:text-sm text-gray-500">Level</p>
-        </Card>
-      </div>
-
-      {/* Daily Quests */}
-      {studyPlan && studyPlan.tasks && studyPlan.tasks.length > 0 && (
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Daily Quests</h2>
-            <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold">
-              {studyPlan.tasks.filter(t => t.completed).length}/{studyPlan.tasks.length} Complete
-            </span>
-          </div>
-          <div className="space-y-3">
-            {studyPlan.tasks.map((task) => (
-              <div key={task.id} className={`flex items-center gap-3 p-4 rounded-xl border-2 ${
-                task.completed ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-              }`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  task.completed ? 'bg-green-500' : 'bg-blue-500'
-                }`}>
-                  {task.completed ? (
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <Zap className="w-5 h-5 text-white" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">{task.task}</p>
-                  <p className="text-sm text-gray-500">{task.topic}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-blue-600">+{task.xp}</p>
-                  <p className="text-xs text-gray-500">XP</p>
-                </div>
+      {/* Daily Missions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+         {[
+           { title: 'Math Adventure', color: '#ffca18', icon: FaRocket, sub: 'Level 3 • Counting Stars' },
+           { title: 'Word Explorer', color: '#12b3eb', icon: FaBookOpen, sub: 'Level 2 • Spell Power' },
+           { title: 'Nature Quiz', color: '#81c784', icon: FaGraduationCap, sub: 'Level 5 • Green Magic' }
+         ].map((card, idx) => (
+           <div key={idx} className="group bg-white rounded-[2.5rem] p-4 shadow-lg border-4 border-transparent hover:border-gray-50 transition-all">
+              <div 
+                 className="rounded-[2.2rem] p-8 flex flex-col items-center text-center gap-6 h-full transition-transform group-hover:scale-[1.02]"
+                 style={{ backgroundColor: card.color + '15' }}
+              >
+                 <div className="w-24 h-24 rounded-3xl flex items-center justify-center text-white text-4xl shadow-xl transition-transform group-hover:rotate-12" style={{ backgroundColor: card.color }}>
+                   <card.icon />
+                 </div>
+                 <div>
+                    <h3 className="text-2xl font-black text-gray-900 mb-1">{card.title}</h3>
+                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{card.sub}</p>
+                 </div>
+                 <Link 
+                    to="/courses"
+                    className="mt-auto w-full py-4 rounded-2xl font-black text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+                    style={{ backgroundColor: card.color }}
+                 >
+                   PLAY NOW
+                 </Link>
               </div>
-            ))}
-          </div>
-          <Button className="mt-4 w-full">Continue Learning</Button>
-        </Card>
-      )}
-
-      {/* Courses with Progress */}
-      {courses && courses.length > 0 && (
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">My Courses</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {courses.map((course, index) => {
-              const courseGradients = [
-                'from-blue-600 to-indigo-700',
-                'from-emerald-600 to-teal-700',
-                'from-orange-500 to-red-600',
-                'from-violet-600 to-purple-700',
-                'from-pink-600 to-rose-700',
-              ];
-              const courseImages = [
-                'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&q=80',
-                'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=600&q=80',
-                'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=600&q=80',
-                'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&q=80',
-                'https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?w=600&q=80',
-              ];
-              const gradient = courseGradients[index % courseGradients.length];
-              const bgImage = courseImages[index % courseImages.length];
-              const totalChapters = course.chapters?.length || course.lessons?.length || 0;
-              const progress = Math.floor(Math.random() * 40) + 30;
-
-              return (
-                <div key={course.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-all group cursor-pointer">
-                  {/* Card image header */}
-                  <div
-                    className="relative h-32 sm:h-36 flex items-end p-4"
-                    style={{
-                      backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2)), url(${bgImage})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
-                  >
-                    <div className="relative z-10 w-full">
-                      <h3 className="text-white font-bold text-base sm:text-lg truncate">{course.name}</h3>
-                      <p className="text-white/70 text-xs sm:text-sm mt-0.5">{course.subject || 'General'}</p>
-                    </div>
-                  </div>
-
-                  {/* Card body */}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs sm:text-sm text-gray-500 font-medium">Progress</span>
-                      <span className="text-xs sm:text-sm font-bold text-gray-900">{progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
-                      <div className={`bg-gradient-to-r ${gradient} h-2 rounded-full transition-all duration-500`} style={{ width: `${progress}%` }} />
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                      <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />{totalChapters} lessons</span>
-                      <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-yellow-500" />+{(index + 1) * 50} XP</span>
-                    </div>
-
-                    <button onClick={() => window.location.href = '/courses'} className="w-full py-2 sm:py-2.5 rounded-xl font-semibold text-sm text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-all flex items-center justify-center gap-2">
-                      Continue Learning
-                      <TrendingUp className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Focus Areas - Professional Design */}
-      {student.weakTopics && Object.keys(student.weakTopics).length > 0 && (
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Target className="w-5 h-5 text-amber-500" />
-              Focus Areas
-            </h2>
-            <span className="text-xs sm:text-sm text-gray-500 font-medium">
-              {Object.values(student.weakTopics).flat().length} topics to improve
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {Object.entries(student.weakTopics).map(([subject, topics]) => (
-              topics.map((topic) => {
-                const subjectColors = {
-                  'Mathematics': { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-600', icon: 'text-blue-500' },
-                  'Science': { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-600', icon: 'text-emerald-500' },
-                  'English': { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700', badge: 'bg-violet-100 text-violet-600', icon: 'text-violet-500' },
-                };
-                const colors = subjectColors[subject] || { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-100 text-amber-600', icon: 'text-amber-500' };
-
-                return (
-                  <div key={topic} className={`p-3 sm:p-4 ${colors.bg} border ${colors.border} rounded-xl flex items-center gap-3 group/focus hover:shadow-sm transition-all`}>
-                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${colors.badge} flex items-center justify-center flex-shrink-0`}>
-                      <Target className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-semibold ${colors.text} capitalize text-sm sm:text-base truncate`}>{topic}</p>
-                      <p className="text-xs text-gray-500">{subject}</p>
-                    </div>
-                    <button className={`px-2.5 py-1 sm:px-3 sm:py-1.5 ${colors.badge} rounded-lg text-xs font-semibold hover:opacity-80 transition-all flex-shrink-0`}>
-                      Practice
-                    </button>
-                  </div>
-                );
-              })
-            ))}
-          </div>
-        </Card>
-      )}
+           </div>
+         ))}
+      </div>
     </div>
   );
 };
 
-// Mastery Mode (15-19 years) - Clean, minimal, analytics-focused
-const MasteryDashboard = ({ student, studyPlan, courses }) => {
+// Growth Mode (Age 11–15): "Academic Dashboard" interface
+const GrowthDashboard = ({ student, courses }) => {
+  const navigate = useNavigate();
+  const BRAND_RED = '#af101a';
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Minimal Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
-          {student.name}
-        </h1>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">Mastery Mode - Level {student.level_number}</p>
+    <div className="space-y-8 animate-in slide-in-from-bottom duration-700 font-plus-jakarta">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6">
+        <div>
+           <p style={{ color: BRAND_RED }} className="font-black uppercase tracking-[0.3em] text-[10px] mb-2">Student Dashboard • Level {student.level_number || 1}</p>
+           <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none">
+             Welcome back, {student.name.split(' ')[0]}!
+           </h1>
+        </div>
+        <div className="flex gap-4">
+           <div className="bg-white px-6 py-4 rounded-2xl border-2 border-gray-50 shadow-sm flex items-center gap-4">
+              <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center shadow-sm">
+                 <FaBolt />
+              </div>
+              <div>
+                 <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Streak</p>
+                 <p className="font-black text-gray-900 leading-tight">{student.streak || 1} Days</p>
+              </div>
+           </div>
+           <div style={{ backgroundColor: BRAND_RED }} className="px-6 py-4 rounded-2xl shadow-lg shadow-red-200 flex items-center gap-4 text-white">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shadow-inner">
+                 <FaMagic />
+              </div>
+              <div>
+                 <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">Global XP</p>
+                 <p className="font-black leading-tight">{student.xp || 0}</p>
+              </div>
+           </div>
+        </div>
       </div>
 
-      {/* Clean Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <Card>
-          <p className="text-xs sm:text-sm text-gray-500 mb-1">XP</p>
-          <p className="text-xl sm:text-2xl font-semibold text-gray-900">{student.xp}</p>
-        </Card>
-        <Card>
-          <p className="text-xs sm:text-sm text-gray-500 mb-1">Streak</p>
-          <p className="text-xl sm:text-2xl font-semibold text-gray-900">{student.streak} days</p>
-        </Card>
-        <Card>
-          <p className="text-xs sm:text-sm text-gray-500 mb-1">Progress</p>
-          <p className="text-xl sm:text-2xl font-semibold text-gray-900">{student.progress}%</p>
-        </Card>
-        <Card>
-          <p className="text-xs sm:text-sm text-gray-500 mb-1">Attendance</p>
-          <p className="text-xl sm:text-2xl font-semibold text-gray-900">{student.attendance}%</p>
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100 relative overflow-hidden group hover:border-gray-200 transition-all">
+             <div className="absolute top-0 right-0 p-8 h-full flex flex-col justify-center opacity-5 group-hover:opacity-10 transition-opacity">
+                <FaGraduationCap size={200} />
+             </div>
+             <div className="relative">
+                <h3 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-3 decoration-2 underline decoration-red-100">
+                   Current Focus <div className="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                   {courses.slice(0, 2).map((course, idx) => (
+                      <div key={idx} className="space-y-4">
+                        <div className="flex justify-between items-end">
+                           <span className="font-black text-gray-900 uppercase tracking-widest text-[10px] opacity-60">{course.name}</span>
+                           <span style={{ color: BRAND_RED }} className="font-black italic">{(idx + 4) * 15}%</span>
+                        </div>
+                        <div className="h-3 bg-gray-50 rounded-full overflow-hidden border border-gray-100 shadow-inner p-[2px]">
+                           <div 
+                              style={{ width: `${(idx + 4) * 15}%`, backgroundColor: BRAND_RED }} 
+                              className="h-full rounded-full transition-all duration-1000 shadow-lg"
+                           ></div>
+                        </div>
+                      </div>
+                   ))}
+                </div>
+                <button 
+                  onClick={() => navigate('/courses')}
+                  className="mt-12 px-10 py-5 bg-gray-900 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-[#af101a] transition-all hover:shadow-xl active:scale-95 flex items-center gap-3"
+                >
+                  Jump Back In <FaArrowRight />
+                </button>
+             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             {courses.slice(2, 4).map((course, idx) => (
+                <div key={idx} className="bg-white p-6 rounded-[2rem] border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all group cursor-pointer" onClick={() => navigate('/courses')}>
+                   <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                         <FaBookOpen className="text-gray-300 group-hover:text-red-500" />
+                      </div>
+                      <div>
+                         <h4 className="font-black text-gray-900 text-sm truncate max-w-[150px]">{course.name}</h4>
+                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">{course.subject}</p>
+                      </div>
+                   </div>
+                </div>
+             ))}
+          </div>
+        </div>
+
+        <div className="space-y-8">
+           <div className="bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 space-y-8">
+              <h3 className="text-xl font-black text-gray-900 flex items-center gap-3">
+                 <FaChartLine style={{ color: BRAND_RED }} /> Growth
+              </h3>
+              <div className="space-y-6">
+                 {[
+                   { label: 'Logical', val: 78 },
+                   { label: 'Creative', val: 92 },
+                   { label: 'Technical', val: 65 }
+                 ].map((skill, i) => (
+                   <div key={i} className="space-y-2">
+                     <div className="flex justify-between font-black text-[10px] uppercase tracking-widest text-gray-400">
+                        <span>{skill.label}</span>
+                        <span className="text-gray-900">{skill.val}%</span>
+                     </div>
+                     <div className="h-2 bg-white rounded-full border border-gray-100 overflow-hidden">
+                        <div style={{ width: `${skill.val}%`, backgroundColor: BRAND_RED }} className="h-full rounded-full opacity-80"></div>
+                     </div>
+                   </div>
+                 ))}
+              </div>
+              <div className="p-5 bg-white rounded-2xl border border-gray-100 group cursor-pointer hover:border-red-100 transition-all">
+                 <div className="flex gap-4">
+                    <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-[#af101a] shrink-0 group-hover:rotate-12 transition-transform">
+                       <FaLightbulb />
+                    </div>
+                    <p className="text-[11px] font-bold text-gray-500 leading-relaxed">
+                       Your efficiency in <span className="text-gray-900 font-black">Math</span> is 15% higher in morning sessions.
+                    </p>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </div>
+    </div>
+  )
+};
+
+// Mastery Mode (Age 16–20): "Executive Terminal" interface
+const MasteryDashboard = ({ student, courses }) => {
+  const navigate = useNavigate();
+  const BRAND_RED = '#af101a';
+
+  return (
+    <div className="space-y-10 animate-in zoom-in duration-700 font-plus-jakarta pb-20">
+      <div className="backdrop-blur-xl bg-gray-900 text-white rounded-[3rem] p-10 md:p-14 shadow-2xl relative overflow-hidden border border-white/5">
+        <div style={{ backgroundColor: BRAND_RED }} className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full -mr-[250px] -mt-[250px] blur-[120px] opacity-20"></div>
+        <div className="relative">
+          <div className="flex items-center gap-4 mb-10">
+             <div style={{ backgroundColor: BRAND_RED }} className="h-[2px] w-12"></div>
+             <span style={{ color: BRAND_RED }} className="text-[10px] font-black tracking-[0.4em] uppercase">Status: Operational</span>
+          </div>
+          <h1 className="text-5xl md:text-8xl font-[1000] tracking-tighter mb-8 leading-none">
+             Executive <br /> Dashboard.
+          </h1>
+          <p className="text-gray-400 font-bold max-w-xl text-lg mb-12 leading-relaxed uppercase tracking-tighter">
+             Welcome, {student.name}. Your learning velocity is currently at <span className="text-white italic underline decoration-[#af101a]">1.4x the target pace</span>.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+             {[
+               { label: 'Uptime', val: '98%' },
+               { label: 'Modules', val: '14/18' },
+               { label: 'Velocity', val: '94.8' },
+               { label: 'Network', val: 'A+' }
+             ].map((stat, i) => (
+               <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:bg-white/10 transition-colors group cursor-default">
+                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2 group-hover:text-red-400 transition-colors">{stat.label}</p>
+                  <p className="text-3xl font-black">{stat.val}</p>
+               </div>
+             ))}
+          </div>
+        </div>
       </div>
 
-      {/* Study Plan */}
-      {studyPlan && studyPlan.tasks && studyPlan.tasks.length > 0 && (
-        <Card>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Today's Schedule</h2>
-          <div className="space-y-2">
-            {studyPlan.tasks.map((task) => (
-              <div key={task.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  className="w-4 h-4 text-blue-600 rounded"
-                  readOnly
-                />
-                <div className="flex-1">
-                  <p className="text-gray-900">{task.task}</p>
-                  <p className="text-sm text-gray-500">{task.topic} • {task.xp} XP</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Button className="mt-4 w-full">Start Session</Button>
-        </Card>
-      )}
-
-      {/* Courses Table */}
-      {courses && courses.length > 0 && (
-        <Card>
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Courses</h2>
-          <div className="space-y-3">
-            {courses.map((course) => (
-              <div key={course.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <BookOpen className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{course.name}</p>
-                    <p className="text-xs sm:text-sm text-gray-500">{course.chapters?.length || 0} chapters</p>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+         <div className="lg:col-span-3 space-y-10">
+            <div className="flex items-center justify-between pb-6 border-b border-gray-100">
+               <h3 className="text-3xl font-black text-gray-900 tracking-tight">Curriculum Tracking</h3>
+               <button onClick={() => navigate('/courses')} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors px-6 py-2 rounded-full border border-gray-100">Full Registry</button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               {courses.slice(0, 4).map((course, idx) => (
+                  <div key={idx} className="group bg-white border-b-2 border-gray-100 hover:border-red-500 p-8 transition-all">
+                     <div className="flex justify-between items-center mb-6">
+                        <span style={{ color: BRAND_RED }} className="text-[10px] font-black uppercase tracking-widest">Registry ID #00{idx+1}</span>
+                        <FaRocket className="text-gray-100 group-hover:text-red-100 transition-colors" />
+                     </div>
+                     <h4 className="text-2xl font-black text-gray-900 mb-8 group-hover:translate-x-2 transition-transform">{course.name}</h4>
+                     <div className="flex items-end justify-between gap-6">
+                        <div className="flex-1 space-y-3">
+                           <div className="flex justify-between text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                              <span>Synchronization</span>
+                              <span>{(idx + 2) * 18}%</span>
+                           </div>
+                           <div className="h-[2px] bg-gray-50 w-full overflow-hidden">
+                              <div style={{ width: `${(idx + 2) * 18}%`, backgroundColor: BRAND_RED }} className="h-full"></div>
+                           </div>
+                        </div>
+                        <button onClick={() => navigate('/courses')} className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-900 hover:bg-black hover:text-white transition-all">
+                           <FaChevronRight />
+                        </button>
+                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 pl-8 sm:pl-0">
-                  <div className="w-24 sm:w-32">
-                    <ProgressBar progress={65} />
-                  </div>
-                  <Button variant="secondary" className="text-xs sm:text-sm">Continue</Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+               ))}
+            </div>
+         </div>
 
-      {/* Areas for Improvement */}
-      {student.weakTopics && Object.keys(student.weakTopics).length > 0 && (
-        <Card>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Areas for Improvement</h2>
-          <div className="space-y-2">
-            {Object.entries(student.weakTopics).map(([subject, topics]) => (
-              topics.map((topic) => (
-                <div key={topic} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-900 capitalize">{topic}</span>
-                  <span className="text-sm text-gray-500">{subject}</span>
+         <div className="space-y-10">
+            <div className="space-y-6">
+               <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] mb-4">Operations</h4>
+               {[
+                 { label: 'Initialize Course', icon: FaBolt },
+                 { label: 'Strategic Review', icon: FaTrophy },
+                 { label: 'Data Export', icon: FaClipboardList }
+               ].map((op, i) => (
+                 <button key={i} className="w-full flex items-center justify-between p-5 rounded-2xl border border-gray-100 font-black text-xs uppercase tracking-widest text-gray-600 hover:bg-gray-50 group transition-all">
+                    <span className="flex items-center gap-4"><op.icon style={{ color: BRAND_RED }} /> {op.label}</span>
+                    <FaArrowRight className="text-[8px] opacity-0 group-hover:opacity-100 transition-opacity" />
+                 </button>
+               ))}
+            </div>
+            <div className="p-8 bg-gray-900 rounded-[2.5rem] shadow-2xl space-y-6">
+                <div className="w-12 h-12 bg-[#af101a] rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-red-900">
+                   <FaMagic />
                 </div>
-              ))
-            ))}
-          </div>
-        </Card>
-      )}
+                <h5 className="text-white font-black uppercase text-[10px] tracking-widest">AI Strategy Advisor</h5>
+                <p className="text-gray-500 text-xs font-bold leading-relaxed">
+                   Based on your recent calculus modules, we've adjusted your strategy to prioritize <span className="text-white">Multivariable Integration</span> for the next 72 hours.
+                </p>
+            </div>
+         </div>
+      </div>
     </div>
   );
 };
@@ -471,36 +320,25 @@ const MasteryDashboard = ({ student, studyPlan, courses }) => {
 const StudentDashboard = () => {
   const { appData, currentUser } = useApp();
   
-  console.log('StudentDashboard - currentUser:', currentUser);
-  console.log('StudentDashboard - appData.students:', appData.students);
-  
   const student = appData.students.find(s => s.id === currentUser?.id);
   
-  console.log('StudentDashboard - found student:', student);
-  
-  // If no student found, show error
   if (!student) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-gray-500">Loading student data...</p>
-          <p className="text-xs text-gray-400 mt-2">Current User ID: {currentUser?.id}</p>
-          <p className="text-xs text-gray-400">Available Students: {appData.students.map(s => s.id).join(', ')}</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <div className="w-16 h-16 border-4 border-t-[#af101a] border-gray-100 rounded-full animate-spin"></div>
+        <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Syncing Data...</p>
       </div>
     );
   }
   
-  const studyPlan = appData.studyPlans.find(p => p.studentId === student.id);
   const courses = appData.courses.filter(c => student.subjects && student.subjects.includes(c.subject));
 
-  // Determine which dashboard to show based on age
   if (student.age <= 10) {
-    return <FoundationDashboard student={student} studyPlan={studyPlan} courses={courses} />;
-  } else if (student.age <= 14) {
-    return <GrowthDashboard student={student} studyPlan={studyPlan} courses={courses} />;
+    return <FoundationDashboard student={student} courses={courses} />;
+  } else if (student.age <= 15) {
+    return <GrowthDashboard student={student} courses={courses} />;
   } else {
-    return <MasteryDashboard student={student} studyPlan={studyPlan} courses={courses} />;
+    return <MasteryDashboard student={student} courses={courses} />;
   }
 };
 
