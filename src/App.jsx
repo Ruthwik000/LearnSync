@@ -28,9 +28,34 @@ import AdminNotifications from './pages/admin/AdminNotifications';
 const AppRoutes = () => {
   const { currentRole, currentUser, updateCurrentUser, switchRole } = useApp();
   const [authLoading, setAuthLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Listen to auth state changes
+    if (initialized) return;
+    
+    // Check if there's a demo user in sessionStorage
+    const demoUser = sessionStorage.getItem('demoUser');
+    if (demoUser) {
+      try {
+        const user = JSON.parse(demoUser);
+        
+        // Load mock users if available
+        const mockUsersStr = sessionStorage.getItem('mockUsers');
+        if (mockUsersStr) {
+          // Mock users will be loaded by updateCurrentUser
+        }
+        
+        updateCurrentUser(user);
+        switchRole(user.role);
+        setAuthLoading(false);
+        setInitialized(true);
+        return;
+      } catch (e) {
+        console.error('Error parsing demo user:', e);
+      }
+    }
+
+    // Listen to auth state changes for real users
     const unsubscribe = onAuthChange((user) => {
       if (user) {
         updateCurrentUser(user);
@@ -44,12 +69,23 @@ const AppRoutes = () => {
         updateCurrentUser(null);
       }
       setAuthLoading(false);
+      setInitialized(true);
     });
 
     return () => unsubscribe();
-  }, [updateCurrentUser, switchRole]);
+  }, []);
 
-  const handleLogin = (user, role) => {
+  const handleLogin = (user, role, mockUsers = null) => {
+    // Check if it's a demo user (has no email or authId)
+    if (!user.email && !user.authId) {
+      // Store demo user in sessionStorage
+      sessionStorage.setItem('demoUser', JSON.stringify(user));
+      
+      // If mockUsers are provided, store them in sessionStorage too
+      if (mockUsers) {
+        sessionStorage.setItem('mockUsers', JSON.stringify(mockUsers));
+      }
+    }
     switchRole(role);
     updateCurrentUser(user);
   };
@@ -59,6 +95,9 @@ const AppRoutes = () => {
   };
 
   const handleLogout = async () => {
+    // Clear demo user and mock users from sessionStorage
+    sessionStorage.removeItem('demoUser');
+    sessionStorage.removeItem('mockUsers');
     await logout();
     updateCurrentUser(null);
   };

@@ -56,6 +56,52 @@ export const allocateMentor = (student, mentors) => {
   return scoredMentors[0].mentor;
 };
 
+// Auto-allocate students to a new mentor
+export const allocateStudentsToMentor = (mentor, students) => {
+  if (!mentor || !students || students.length === 0) {
+    return [];
+  }
+
+  // Filter students who don't have mentors and match subjects
+  const eligibleStudents = students.filter(student => 
+    !student.mentorId && 
+    student.subjects.some(subject => mentor.subjects.includes(subject))
+  );
+
+  if (eligibleStudents.length === 0) {
+    return [];
+  }
+
+  // Score students based on match quality
+  const scoredStudents = eligibleStudents.map(student => {
+    let score = 0;
+
+    // Subject match
+    const subjectMatch = student.subjects.filter(s => mentor.subjects.includes(s)).length;
+    score += subjectMatch * 10;
+
+    // Level match
+    if (student.detectedLevel === 'beginner' && mentor.experience >= 3) {
+      score += 20;
+    }
+    if (student.detectedLevel === 'advanced' && mentor.skillLevel === 'advanced') {
+      score += 25;
+    }
+
+    // Age match
+    if (student.age <= 10 && mentor.teachingExperience) {
+      score += 15;
+    }
+
+    return { student, score };
+  });
+
+  // Sort by score and return top students up to teaching capacity
+  scoredStudents.sort((a, b) => b.score - a.score);
+  const capacity = mentor.teachingCapacity || 5;
+  return scoredStudents.slice(0, capacity).map(s => s.student);
+};
+
 // Get class-based subjects
 export const getSubjectsByClass = (classLevel) => {
   const classNum = parseInt(classLevel);
