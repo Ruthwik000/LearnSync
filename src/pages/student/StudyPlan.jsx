@@ -136,13 +136,21 @@ Make the content age-appropriate and engaging. Use simple language. Do NOT use a
   };
 
   const handleAIHelp = (task) => {
-    // Store the task context in sessionStorage so AI Tutor can access it
-    sessionStorage.setItem('aiTutorContext', JSON.stringify({
-      title: `${task.subject}: ${task.task}`,
-      content: task.task
-    }));
-    // Navigate to AI Tutor page
-    navigate('/ai-tutor');
+    try {
+      // Store the task context in sessionStorage so AI Tutor can access it
+      const contextData = {
+        title: `${task.subject}: ${task.task}`,
+        content: `Subject: ${task.subject}\nTopic: ${task.task}\nDuration: ${task.duration}\n\nPlease help me understand this topic better.`
+      };
+      sessionStorage.setItem('aiTutorContext', JSON.stringify(contextData));
+      console.log('AI Tutor context set:', contextData);
+      // Navigate to AI Tutor page
+      navigate('/ai-tutor');
+    } catch (error) {
+      console.error('Error setting AI context:', error);
+      // Fallback: navigate anyway
+      navigate('/ai-tutor');
+    }
   };
 
   const handleQuizAnswer = (taskId, qIdx, ansIdx) => {

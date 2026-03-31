@@ -430,7 +430,12 @@ const Courses = () => {
               </Button>
             )}
             <Button variant="secondary" onClick={() => {
-              window.dispatchEvent(new CustomEvent('open-ai-drawer', { detail: { title: selectedSubtopic.title, content: selectedSubtopic.content } }));
+              // Store context and navigate to AI Tutor
+              sessionStorage.setItem('aiTutorContext', JSON.stringify({
+                title: selectedSubtopic.title,
+                content: selectedSubtopic.content
+              }));
+              window.location.href = '/ai-tutor';
             }} className="flex-1 flex items-center justify-center gap-2 text-sm sm:text-base py-2.5 sm:py-2">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" /> Ask AI About This
             </Button>
