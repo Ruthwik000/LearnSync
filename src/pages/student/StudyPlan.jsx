@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import Card from '../../components/Card';
-import Button from '../../components/Button';
 import { CheckCircle, Circle, Sparkles, Clock, BookOpen, Calendar, ChevronRight, ChevronDown, Plus, X, CalendarDays, Target, Zap, Brain, MessageCircle, Award, Loader2 } from 'lucide-react';
 import { callGemini } from '../../utils/gemini';
 
 const StudyPlan = () => {
   const { appData, currentUser } = useApp();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPlanBuilder, setShowPlanBuilder] = useState(false);
   const [todaySchedule, setTodaySchedule] = useState([]);
@@ -136,9 +136,13 @@ Make the content age-appropriate and engaging. Use simple language. Do NOT use a
   };
 
   const handleAIHelp = (task) => {
-    window.dispatchEvent(new CustomEvent('open-ai-drawer', {
-      detail: { title: `${task.subject}: ${task.task}`, content: task.task }
+    // Store the task context in sessionStorage so AI Tutor can access it
+    sessionStorage.setItem('aiTutorContext', JSON.stringify({
+      title: `${task.subject}: ${task.task}`,
+      content: task.task
     }));
+    // Navigate to AI Tutor page
+    navigate('/ai-tutor');
   };
 
   const handleQuizAnswer = (taskId, qIdx, ansIdx) => {
@@ -516,43 +520,7 @@ Respond ONLY with valid JSON:
         </div>
         
         <div className="space-y-2.5">
-          {todaySchedule.map((task) => (
-            <div key={task.id} onClick={() => toggleTaskComplete(task.id)}
-              className={`flex items-center gap-3.5 p-3.5 rounded-xl border-2 cursor-pointer transition-all group
-                ${task.completed ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 hover:border-blue-200 hover:bg-slate-50'}`}>
-              {/* Time */}
-              <div className={`w-16 text-center py-1.5 rounded-lg text-xs font-bold flex-shrink-0
-                ${task.completed ? 'bg-emerald-200 text-emerald-800' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
-                {task.time}
-              </div>
-              {/* Checkbox */}
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
-                ${task.completed ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300 group-hover:border-blue-400'}`}>
-                {task.completed && <CheckCircle className="w-3.5 h-3.5 text-white" />}
-              </div>
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold
-                    ${task.type === 'ai-generated' ? 'bg-sky-100 text-sky-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {task.subject}
-                  </span>
-                  {task.type === 'ai-generated' && (
-                    <span className="flex items-center gap-0.5 text-sky-500 text-xs font-medium">
-                      <Sparkles className="w-3 h-3" /> AI
-                    </span>
-                  )}
-                  <span className="text-xs text-slate-400">{task.duration}</span>
-                </div>
-                <p className={`text-sm font-medium truncate ${task.completed ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
-                  {task.task}
-                </p>
-              </div>
-              {task.completed && (
-                <span className="px-2.5 py-1 bg-emerald-600 text-white text-xs rounded-full font-semibold flex-shrink-0">Done</span>
-              )}
-            </div>
-          ))}
+          {todaySchedule.map((task) => renderTaskItem(task))}
           {todaySchedule.length === 0 && (
             <div className="text-center py-10 text-slate-400">
               <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />

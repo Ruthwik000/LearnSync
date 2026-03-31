@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
-import { ChevronRight, CheckCircle, Play, Clock, Award, ArrowLeft, Sparkles, BookOpen, FlaskConical, Calculator, PenTool, Landmark, Atom, Zap, Trophy, HelpCircle } from 'lucide-react';
+import { ChevronRight, CheckCircle, Play, Clock, Award, ArrowLeft, Sparkles, BookOpen, FlaskConical, Calculator, PenTool, Landmark, Zap, Trophy, HelpCircle } from 'lucide-react';
 import { courseData } from '../../data/courseData';
 
 // Icon mapping for course types (no emojis)
@@ -13,10 +13,6 @@ const courseIcons = {
   physics: Zap,
   chemistry: FlaskConical,
   history: Landmark,
-};
-
-const getCourseIcon = (iconType) => {
-  return courseIcons[iconType] || BookOpen;
 };
 
 const Courses = () => {
@@ -138,7 +134,7 @@ const Courses = () => {
             const progress = getCourseProgress(course);
             const totalLessons = course.lessons.length;
             const totalSubtopics = course.lessons.reduce((s, l) => s + l.subtopics.length, 0);
-            const IconComponent = getCourseIcon(course.iconType);
+            const IconComponent = courseIcons[course.iconType] || BookOpen;
 
             return (
               <div key={course.id} onClick={() => openCourse(course)}
@@ -203,7 +199,7 @@ const Courses = () => {
   // ─── LESSONS VIEW ───
   if (view === 'lessons') {
     const progress = getCourseProgress(selectedCourse);
-    const IconComponent = getCourseIcon(selectedCourse.iconType);
+    const CourseIcon = courseIcons[selectedCourse.iconType] || BookOpen;
 
     return (
       <div className="space-y-4 sm:space-y-6">
@@ -215,7 +211,7 @@ const Courses = () => {
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-gray-200 relative overflow-hidden">
           <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
             <div className="w-10 h-10 sm:w-14 sm:h-14 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
-              <IconComponent className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+              <CourseIcon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{selectedCourse.name}</h1>

@@ -10,6 +10,7 @@ import StudentOnboarding from './pages/student/StudentOnboarding';
 import Courses from './pages/student/Courses';
 import Doubts from './pages/student/Doubts';
 import StudyPlan from './pages/student/StudyPlan';
+import AITutor from './pages/student/AITutor';
 import Profile from './pages/student/Profile';
 import MentorDashboard from './pages/mentor/MentorDashboard';
 import MentorOnboarding from './pages/mentor/MentorOnboarding';
@@ -144,6 +145,7 @@ const AppRoutes = () => {
             <Route path="/courses" element={<Courses />} />
             <Route path="/study-plan" element={<StudyPlan />} />
             <Route path="/doubts" element={<Doubts />} />
+            <Route path="/ai-tutor" element={<AITutor />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>

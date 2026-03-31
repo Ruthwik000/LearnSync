@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Sparkles, Brain, Mic, MicOff, Volume2, VolumeX, Globe } from 'lucide-react';
 import { callGemini } from '../utils/gemini';
-import Button from './Button';
 
 const LANGUAGES = [
   { code: 'en-US', label: 'English', flag: '🇬🇧', ttsLang: 'en', geminiInstruction: 'Respond in English.' },
@@ -186,7 +185,7 @@ const ChatbotPanel = ({ isOpen, context = null, onQuizGenerated = null, studentI
     } finally {
       setLoading(false);
     }
-  }, [context, conversationCount, showQuiz, quizSubmitted, speakText]);
+  }, [context, conversationCount, showQuiz, quizSubmitted, speakText, selectedLang.geminiInstruction]);
 
   // Initialize speech recognition and synthesis
   useEffect(() => {
@@ -535,6 +534,31 @@ Respond ONLY with valid JSON in this exact format, no additional text before or 
         )}
 
         <div className="flex items-center gap-1.5">
+          {/* Language Selector */}
+          <div className="relative group">
+            <button
+              className="p-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-1.5"
+              title="Change language"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium hidden sm:inline">{selectedLang.flag}</span>
+            </button>
+            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setSelectedLang(lang)}
+                  className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 transition-colors flex items-center gap-2 ${
+                    selectedLang.code === lang.code ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700'
+                  }`}
+                >
+                  <span className="text-base">{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             onClick={() => setVoiceModeEnabled(prev => !prev)}
             className={`p-2 rounded-xl transition-all text-xs flex items-center gap-1.5 ${

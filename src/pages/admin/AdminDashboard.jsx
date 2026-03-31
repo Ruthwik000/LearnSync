@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import Card from '../../components/Card';
 import { Users, BookOpen, TrendingUp, AlertTriangle, X, ChevronRight, Sparkles, Lightbulb, ArrowRight, Brain } from 'lucide-react';
+import { mockStudents, mockMentors } from '../../utils/mockData';
 
 // Declining subjects data for AI suggestions & alerts
 const DECLINING_SUBJECTS = [
@@ -107,7 +108,7 @@ const StatusBadge = ({ value, thresholds, labels }) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 const AdminDashboard = () => {
-  const { appData } = useApp();
+  const { appData: _appData } = useApp();
   const [modal, setModal] = useState(null); // 'highRisk' | 'lowMentors' | 'declining'
 
   // Use admin-specific mockStudents / mockMentors (richer dataset for admin views)
@@ -117,7 +118,6 @@ const AdminDashboard = () => {
   // Calculate stats
   const totalStudents = adminStudents.length;
   const activeMentors = adminMentors.filter(m => m.status === 'active').length;
-  const totalSessions = appData.sessions.length;
 
   // Calculate average progress
   const avgProgress = totalStudents > 0
@@ -139,9 +139,6 @@ const AdminDashboard = () => {
 
   // Declining subjects
   const decliningSubjects = DECLINING_SUBJECTS;
-
-  // Declining subjects (placeholder - would need more complex logic in production)
-  const decliningSubjects = [];
 
   // ── Chart data ──────────────────────────────────────────────────────────
   const weeklyProgressData = [
