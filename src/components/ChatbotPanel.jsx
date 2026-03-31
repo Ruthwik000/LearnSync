@@ -28,36 +28,66 @@ const ChatbotPanel = ({ isOpen, context = null, onQuizGenerated = null, studentI
   const synthRef = useRef(null);
   const errorTimeoutRef = useRef(null);
   const ttsAudioRef = useRef(null);
+  // Stable refs to avoid effect dependency churn
+  const selectedLangRef = useRef(selectedLang);
+  const voiceModeRef = useRef(voiceModeEnabled);
+  const isListeningRef = useRef(isListening);
+  const loadingRef = useRef(loading);
 
-  // Split text into speakable chunks (Google TTS has ~200 char limit)
-  const chunkText = (text, maxLen = 190) => {
+  // Keep refs in sync
+  useEffect(() => { selectedLangRef.current = selectedLang; }, [selectedLang]);
+  useEffect(() => { voiceModeRef.current = voiceModeEnabled; }, [voiceModeEnabled]);
+  useEffect(() => { isListeningRef.current = isListening; }, [isListening]);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
+
+  // ── Improved text chunking for Hindi/Telugu/English ──
+  // Google Translate TTS has a ~200 char limit per request.
+  // Telugu uses '.' or '।' less often, so we also split on ',' and spaces.
+  const chunkText = useCallback((text, maxLen = 180) => {
+    if (!text) return [];
     const chunks = [];
-    let rest = text;
+    let rest = text.trim();
     while (rest.length > 0) {
       if (rest.length <= maxLen) { chunks.push(rest); break; }
-      let i = rest.lastIndexOf('।', maxLen);  // Hindi/Telugu sentence end
-      if (i < 30) i = rest.lastIndexOf('.', maxLen);
-      if (i < 30) i = rest.lastIndexOf(' ', maxLen);
-      if (i < 30) i = maxLen;
+      // Try sentence-ending punctuation first
+      let i = rest.lastIndexOf('।', maxLen);       // Hindi purna viram
+      if (i < 20) i = rest.lastIndexOf('.', maxLen);   // English period
+      if (i < 20) i = rest.lastIndexOf('?', maxLen);
+      if (i < 20) i = rest.lastIndexOf('!', maxLen);
+      // Then try clause-level punctuation
+      if (i < 20) i = rest.lastIndexOf(',', maxLen);
+      if (i < 20) i = rest.lastIndexOf(';', maxLen);
+      // Telugu-specific: try splitting on spaces near the limit
+      if (i < 20) i = rest.lastIndexOf(' ', maxLen);
+      if (i < 20) i = maxLen;  // hard cut as last resort
       chunks.push(rest.substring(0, i + 1).trim());
       rest = rest.substring(i + 1).trim();
     }
-    return chunks;
-  };
+    return chunks.filter(c => c.length > 0);
+  }, []);
 
-  // Text-to-Speech: Speak in any language
+  // ── Text-to-Speech: speak in any language ──
   const speakText = useCallback((text) => {
     if (!text) return;
+    const lang = selectedLangRef.current;
 
     // Stop any current playback
     if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 
-    // For English, use native browser TTS
-    if (selectedLang.ttsLang === 'en') {
+    // Clean text for speech (remove markdown leftovers)
+    const cleanText = text
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/`{1,3}/g, '')
+      .trim();
+
+    // ── For English: use native browser TTS ──
+    if (lang.ttsLang === 'en') {
       if (!('speechSynthesis' in window)) return;
       const synth = window.speechSynthesis;
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = 'en-US';
       utterance.rate = 0.9;
       utterance.onstart = () => setIsSpeaking(true);
@@ -67,68 +97,73 @@ const ChatbotPanel = ({ isOpen, context = null, onQuizGenerated = null, studentI
       return;
     }
 
-    // For Hindi/Telugu, use Google Translate TTS
-    const langCode = selectedLang.ttsLang; // 'hi' or 'te'
-    const chunks = chunkText(text);
+    // ── For Hindi/Telugu: try Google Translate TTS via proxy ──
+    const langCode = lang.ttsLang; // 'hi' or 'te'
+    const chunks = chunkText(cleanText);
+    if (chunks.length === 0) return;
+
     let idx = 0;
+    let proxyFailed = false;
     setIsSpeaking(true);
+
+    const playWithBrowserFallback = (fullText) => {
+      // Fallback: Use browser speechSynthesis if a voice is available
+      if (!('speechSynthesis' in window)) { setIsSpeaking(false); return; }
+      const synth = window.speechSynthesis;
+      const voices = synth.getVoices();
+      const langVoice = voices.find(v => v.lang.startsWith(langCode));
+      if (langVoice) {
+        const utterance = new SpeechSynthesisUtterance(fullText);
+        utterance.voice = langVoice;
+        utterance.lang = lang.code;
+        utterance.rate = 0.9;
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+        synth.speak(utterance);
+      } else {
+        console.warn('[TTS] No browser voice for', langCode, '- trying anyway');
+        const utterance = new SpeechSynthesisUtterance(fullText);
+        utterance.lang = lang.code;
+        utterance.rate = 0.85;
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+        synth.speak(utterance);
+      }
+    };
 
     const playNext = () => {
       if (idx >= chunks.length) { setIsSpeaking(false); return; }
+      if (proxyFailed) {
+        // If proxy already failed, use browser TTS for remaining text
+        const remaining = chunks.slice(idx).join(' ');
+        playWithBrowserFallback(remaining);
+        return;
+      }
+
+      // NOTE: The text is already decoded here; the proxy in vite.config.js
+      // will encode it when building the upstream URL.
+      // We pass it as a query param — the browser will percent-encode automatically.
       const q = encodeURIComponent(chunks[idx]);
       const audio = new Audio(`/tts-api?q=${q}&tl=${langCode}`);
       ttsAudioRef.current = audio;
       audio.onended = () => { idx++; playNext(); };
-      audio.onerror = () => { console.error('[TTS] Audio chunk failed'); idx++; playNext(); };
-      audio.play().catch(err => { console.error('[TTS] Play error:', err); setIsSpeaking(false); });
+      audio.onerror = (e) => {
+        console.error('[TTS] Proxy chunk failed, falling back to browser TTS', e);
+        proxyFailed = true;
+        const remaining = chunks.slice(idx).join(' ');
+        playWithBrowserFallback(remaining);
+      };
+      audio.play().catch(err => {
+        console.error('[TTS] Play error:', err);
+        proxyFailed = true;
+        const remaining = chunks.slice(idx).join(' ');
+        playWithBrowserFallback(remaining);
+      });
     };
     playNext();
-  }, [selectedLang]);
+  }, [chunkText]);
 
-  const stopRecognition = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsListening(false);
-    setVoiceError('');
-  }, [setVoiceError]);
-
-  const requestMicrophonePermissionAndStart = useCallback(() => {
-    if (!recognitionRef.current) {
-      setVoiceError('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
-      return;
-    }
-
-    const startRecognition = () => {
-      try {
-        recognitionRef.current?.start();
-      } catch {
-        setVoiceError('Could not start voice input. Please try again.');
-      }
-    };
-
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
-          setVoiceError('');
-          startRecognition();
-        })
-        .catch((err) => {
-          if (err.name === 'NotAllowedError') {
-            setVoiceError('Microphone permission denied. Please allow access.');
-          } else if (err.name === 'NotFoundError') {
-            setVoiceError('No microphone found. Please connect one and try again.');
-          } else {
-            setVoiceError('Could not access microphone. Please check your settings.');
-          }
-        });
-    } else {
-      setVoiceError('');
-      startRecognition();
-    }
-  }, [setVoiceError]);
-
-  // Handle sending voice message
+  // ── Handle sending voice message ──
   const handleSendVoiceMessage = useCallback(async (transcript) => {
     if (!transcript.trim()) return;
 
@@ -141,7 +176,8 @@ const ChatbotPanel = ({ isOpen, context = null, onQuizGenerated = null, studentI
 
     try {
       let prompt = userMessage;
-      const langInstr = selectedLang.geminiInstruction;
+      const lang = selectedLangRef.current;
+      const langInstr = lang.geminiInstruction;
       
       if (context) {
         prompt = `${langInstr}\nTopic: ${context.title}\nContent: ${context.content}\n\nStudent question: ${userMessage}\n\nProvide a clear, concise explanation in plain text. Do not use asterisks, markdown formatting, or special characters. Write in simple paragraphs.`;
@@ -185,87 +221,141 @@ const ChatbotPanel = ({ isOpen, context = null, onQuizGenerated = null, studentI
     } finally {
       setLoading(false);
     }
-  }, [context, conversationCount, showQuiz, quizSubmitted, speakText, selectedLang.geminiInstruction]);
+  }, [context, conversationCount, showQuiz, quizSubmitted, speakText]);
 
-  // Initialize speech recognition and synthesis
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = selectedLang.code;
-      recognitionRef.current.maxAlternatives = 1;
+  // ── Create / update speech recognition (stable, no cascading deps) ──
+  const createRecognition = useCallback(() => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      return null;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;  // Show partial results for better UX
+    recognition.maxAlternatives = 3;    // More alternatives = better accuracy for non-English
+    return recognition;
+  }, []);
 
-      recognitionRef.current.onstart = () => {
-        setVoiceError('');
-        setIsListening(true);
-      };
+  // Wire up recognition event handlers — called once on mount and when lang changes
+  const setupRecognitionHandlers = useCallback((recognition) => {
+    if (!recognition) return;
 
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
+    recognition.onstart = () => {
+      setVoiceError('');
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      // Get the latest final or interim result
+      let finalTranscript = '';
+      let interimTranscript = '';
+
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          // Pick the alternative with highest confidence
+          let best = result[0];
+          for (let j = 1; j < result.length; j++) {
+            if (result[j].confidence > best.confidence) best = result[j];
+          }
+          finalTranscript += best.transcript;
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+
+      // Show interim results in the input
+      if (interimTranscript && !finalTranscript) {
+        setInput(interimTranscript);
+      }
+
+      if (finalTranscript) {
+        setInput(finalTranscript);
         setIsListening(false);
-        setVoiceError('');
-        
         setVoiceError('✓ Got it! Sending your question...');
-        
+
         setTimeout(() => {
           setVoiceError('');
-          handleSendVoiceMessage(transcript);
-        }, 500);
-      };
+          handleSendVoiceMessage(finalTranscript);
+        }, 400);
+      }
+    };
 
-      recognitionRef.current.onerror = (event) => {
-        setIsListening(false);
-        
-        if (errorTimeoutRef.current) {
-          clearTimeout(errorTimeoutRef.current);
-        }
-        
-        let errorMessage = '';
-        switch (event.error) {
-          case 'no-speech':
-            errorMessage = '🎤 No speech detected. Click mic and speak immediately!';
-            break;
-          case 'audio-capture':
-            errorMessage = 'Microphone not found. Please check your device.';
-            break;
-          case 'not-allowed':
-            errorMessage = 'Microphone permission denied. Please allow access.';
-            break;
-          case 'network':
-            errorMessage = 'Network error. Please check your connection.';
-            break;
-          case 'aborted':
-            break;
-          default:
-            errorMessage = `Voice input error: ${event.error}`;
-        }
-        
-        if (errorMessage) {
-          setVoiceError(errorMessage);
-          errorTimeoutRef.current = setTimeout(() => {
-            setVoiceError('');
-          }, 5000);
-        }
-      };
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+      
+      let errorMessage = '';
+      switch (event.error) {
+        case 'no-speech':
+          errorMessage = '🎤 No speech detected. Click mic and speak immediately!';
+          break;
+        case 'audio-capture':
+          errorMessage = 'Microphone not found. Please check your device.';
+          break;
+        case 'not-allowed':
+          errorMessage = 'Microphone permission denied. Please allow access.';
+          break;
+        case 'network':
+          errorMessage = 'Network error. Speech recognition requires internet for non-English languages.';
+          break;
+        case 'aborted':
+          break;
+        default:
+          errorMessage = `Voice input error: ${event.error}`;
+      }
+      
+      if (errorMessage) {
+        setVoiceError(errorMessage);
+        errorTimeoutRef.current = setTimeout(() => {
+          setVoiceError('');
+        }, 5000);
+      }
+    };
 
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
+    recognition.onend = () => {
+      setIsListening(false);
+      // Auto-restart if voice mode is still enabled and we're not loading
+      if (voiceModeRef.current && !loadingRef.current) {
+        setTimeout(() => {
+          if (voiceModeRef.current && !isListeningRef.current && !loadingRef.current) {
+            try {
+              recognition.lang = selectedLangRef.current.code;
+              recognition.start();
+            } catch (e) {
+              console.warn('[Voice] Could not auto-restart recognition:', e);
+            }
+          }
+        }, 300);
+      }
+    };
+  }, [handleSendVoiceMessage]);
+
+  // ── Initialize speech recognition — once on mount ──
+  useEffect(() => {
+    const recognition = createRecognition();
+    if (recognition) {
+      recognition.lang = selectedLang.code;
+      setupRecognitionHandlers(recognition);
+      recognitionRef.current = recognition;
     }
 
-    // Initialize speech synthesis
+    // Initialize speech synthesis and pre-load voices
     if ('speechSynthesis' in window) {
       synthRef.current = window.speechSynthesis;
-      // Force load voices
-      synthRef.current.getVoices();
+      synthRef.current.getVoices(); // trigger initial load
+      // Chrome loads voices async — listen for the event
+      synthRef.current.onvoiceschanged = () => {
+        synthRef.current.getVoices();
+      };
     }
 
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        try { recognitionRef.current.abort(); } catch {}
       }
       if (synthRef.current) {
         synthRef.current.cancel();
@@ -273,9 +363,42 @@ const ChatbotPanel = ({ isOpen, context = null, onQuizGenerated = null, studentI
       if (errorTimeoutRef.current) {
         clearTimeout(errorTimeoutRef.current);
       }
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current = null;
+      }
     };
-  }, [handleSendVoiceMessage, selectedLang]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // ── When language changes, update the recognition instance ──
+  useEffect(() => {
+    if (recognitionRef.current) {
+      // Stop current session gracefully
+      const wasListening = isListeningRef.current;
+      try { recognitionRef.current.abort(); } catch {}
+      setIsListening(false);
+
+      // Update language on the existing instance
+      recognitionRef.current.lang = selectedLang.code;
+      // Re-attach handlers (they reference the latest closure)
+      setupRecognitionHandlers(recognitionRef.current);
+
+      // Restart if we were listening or voice mode is on
+      if (wasListening || voiceModeEnabled) {
+        setTimeout(() => {
+          try {
+            recognitionRef.current?.start();
+          } catch (e) {
+            console.warn('[Voice] Could not restart after lang change:', e);
+          }
+        }, 200);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLang, setupRecognitionHandlers]);
+
+  // ── Welcome message ──
   useEffect(() => {
     if (context) {
       const welcomeMessage = `I'm here to help you understand "${context.title}". Ask me anything about this topic.`;
@@ -308,32 +431,86 @@ const ChatbotPanel = ({ isOpen, context = null, onQuizGenerated = null, studentI
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // ── Voice mode toggle — start/stop recognition ──
   useEffect(() => {
     if (!isOpen) return;
+    if (!recognitionRef.current) return;
 
-    if (voiceModeEnabled && !isListening) {
-      requestMicrophonePermissionAndStart();
-      return;
+    if (voiceModeEnabled && !isListening && !loading) {
+      try {
+        recognitionRef.current.lang = selectedLang.code;
+        recognitionRef.current.start();
+      } catch (e) {
+        console.warn('[Voice] Could not start recognition:', e);
+      }
     }
 
     if (!voiceModeEnabled && isListening) {
-      stopRecognition();
+      try { recognitionRef.current.abort(); } catch {}
+      setIsListening(false);
     }
-  }, [voiceModeEnabled, isOpen, isListening, requestMicrophonePermissionAndStart, stopRecognition]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceModeEnabled, isOpen]);
 
+  // ── Stop everything when panel closes ──
   useEffect(() => {
     if (!isOpen && voiceModeEnabled) {
-      stopRecognition();
+      try { recognitionRef.current?.abort(); } catch {}
+      setIsListening(false);
       setVoiceModeEnabled(false);
     }
-  }, [isOpen, voiceModeEnabled, stopRecognition]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const stopRecognition = useCallback(() => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch {}
+    }
+    setIsListening(false);
+    setVoiceError('');
+  }, []);
+
+  const requestMicrophonePermissionAndStart = useCallback(() => {
+    if (!recognitionRef.current) {
+      setVoiceError('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    const startRecognition = () => {
+      try {
+        recognitionRef.current.lang = selectedLangRef.current.code;
+        recognitionRef.current.start();
+      } catch {
+        setVoiceError('Could not start voice input. Please try again.');
+      }
+    };
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          setVoiceError('');
+          startRecognition();
+        })
+        .catch((err) => {
+          if (err.name === 'NotAllowedError') {
+            setVoiceError('Microphone permission denied. Please allow access.');
+          } else if (err.name === 'NotFoundError') {
+            setVoiceError('No microphone found. Please connect one and try again.');
+          } else {
+            setVoiceError('Could not access microphone. Please check your settings.');
+          }
+        });
+    } else {
+      setVoiceError('');
+      startRecognition();
+    }
+  }, []);
 
   const toggleListening = () => {
     if (isListening) {
       stopRecognition();
       return;
     }
-
     requestMicrophonePermissionAndStart();
   };
 
@@ -541,7 +718,7 @@ Respond ONLY with valid JSON in this exact format, no additional text before or 
               title="Change language"
             >
               <Globe className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium hidden sm:inline">{selectedLang.flag}</span>
+              <span className="text-xs font-medium hidden sm:inline">{selectedLang.flag} {selectedLang.label}</span>
             </button>
             <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
               {LANGUAGES.map((lang) => (
@@ -607,6 +784,7 @@ Respond ONLY with valid JSON in this exact format, no additional text before or 
                 <p className="text-xs font-semibold text-blue-900 mb-0.5">Voice Mode Available</p>
                 <p className="text-xs text-blue-700 leading-relaxed">
                   Tap the mic icon above to enable voice mode, or use the mic button below for single questions.
+                  Supports English, हिन्दी, and తెలుగు — select your language from the globe menu.
                 </p>
               </div>
             </div>
@@ -754,7 +932,7 @@ Respond ONLY with valid JSON in this exact format, no additional text before or 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isListening ? 'Listening…' : 'Type or click mic…'}
+            placeholder={isListening ? 'Listening…' : `Type or click mic (${selectedLang.label})…`}
             className="flex-1 px-3.5 py-2.5 text-sm border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-60"
             disabled={loading || isListening}
           />
