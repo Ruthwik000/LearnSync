@@ -43,19 +43,5 @@ function ttsProxyPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), ttsProxyPlugin()],
-  build: {
-    target: 'esnext',
-    minify: 'esbuild',
-    sourcemap: false,
-    chunkSizeWarningLimit: 1000
-  },
-  server: {
-    port: 5173,
-    host: true
-  },
-  preview: {
-    port: 4173,
-    host: true
-  }
+  plugins: [react(), ttsProxyPlugin()]
 })
