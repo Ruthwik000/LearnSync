@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
-import { BookOpen, Plus, Sparkles, Eye } from 'lucide-react';
+import { BookOpen, Plus, Sparkles, Eye, Upload, FileText, X, Loader2 } from 'lucide-react';
 import { callGemini } from '../../utils/gemini';
+import { extractTextFromPDF } from '../../utils/pdfExtractor';
 
 const ContentCreation = () => {
   const { appData, currentUser, addCourse, addChapter, addTopic } = useApp();
@@ -12,6 +13,11 @@ const ContentCreation = () => {
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfExtracting, setPdfExtracting] = useState(false);
+  const [pdfInfo, setPdfInfo] = useState(null);
+  const fileInputRef = useRef(null);
 
   const [courseForm, setCourseForm] = useState({
     name: '',
@@ -43,7 +49,8 @@ const ContentCreation = () => {
       };
       addCourse(newCourse);
       setCourseForm({ name: '', subject: '', level: 'beginner' });
-      setStep('select');
+      setSuccessMsg('Course created successfully!');
+      setTimeout(() => { setSuccessMsg(''); setStep('select'); }, 1500);
     }
   };
 
@@ -56,7 +63,8 @@ const ContentCreation = () => {
       };
       addChapter(newChapter);
       setChapterForm({ name: '', order: 1 });
-      setStep('select');
+      setSuccessMsg('Chapter added successfully!');
+      setTimeout(() => { setSuccessMsg(''); setStep('select'); }, 1500);
     }
   };
 
@@ -149,7 +157,8 @@ Generate a JSON response with:
       addTopic(newTopic);
       setTopicForm({ name: '', content: '', difficulty: 'basic', xpReward: 50 });
       setPreview(null);
-      setStep('select');
+      setSuccessMsg('Topic published successfully!');
+      setTimeout(() => { setSuccessMsg(''); setStep('select'); }, 1500);
     }
   };
 
@@ -160,9 +169,17 @@ Generate a JSON response with:
         <p className="text-gray-500 mt-1">Create courses, chapters, and topics for students</p>
       </div>
 
+      {/* Success Message */}
+      {successMsg && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 font-medium text-sm flex items-center gap-2">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+          {successMsg}
+        </div>
+      )}
+
       {/* Action Buttons */}
       {step === 'select' && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setStep('course')}>
             <div className="text-center p-6">
               <Plus className="w-12 h-12 text-blue-600 mx-auto mb-3" />
@@ -253,11 +270,11 @@ Generate a JSON response with:
               <label className="block text-gray-700 mb-2">Select Course</label>
               <select
                 value={selectedCourse?.id || ''}
-                onChange={(e) => setSelectedCourse(mentorCourses.find(c => c.id === parseInt(e.target.value)))}
+                onChange={(e) => setSelectedCourse(mentorCourses.find(c => c.id === e.target.value) || allCourses.find(c => c.id === e.target.value))}
                 className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Choose a course</option>
-                {mentorCourses.map(course => (
+                {[...mentorCourses, ...appData.courses.filter(c => !mentorCourses.find(mc => mc.id === c.id))].map(course => (
                   <option key={course.id} value={course.id}>{course.name}</option>
                 ))}
               </select>
@@ -308,22 +325,28 @@ Generate a JSON response with:
                 <select
                   value={selectedChapter?.id || ''}
                   onChange={(e) => {
-                    const chapter = appData.chapters.find(ch => ch.id === parseInt(e.target.value));
+                    const chapter = appData.chapters.find(ch => ch.id === e.target.value);
                     setSelectedChapter(chapter);
-                    const course = appData.courses.find(c => c.chapters.includes(chapter?.id));
-                    setSelectedCourse(course);
+                    if (chapter) {
+                      const course = appData.courses.find(c => (c.chapters || []).includes(chapter.id));
+                      setSelectedCourse(course);
+                    }
                   }}
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Choose a chapter</option>
-                  {appData.chapters
-                    .filter(ch => {
-                      const course = appData.courses.find(c => c.chapters.includes(ch.id));
-                      return course?.createdBy === mentor.id;
+                  {appData.chapters.length > 0 ? (
+                    appData.chapters.map(chapter => {
+                      const course = appData.courses.find(c => (c.chapters || []).includes(chapter.id));
+                      return (
+                        <option key={chapter.id} value={chapter.id}>
+                          {chapter.name} {course ? `(${course.name})` : ''}
+                        </option>
+                      );
                     })
-                    .map(chapter => (
-                      <option key={chapter.id} value={chapter.id}>{chapter.name}</option>
-                    ))}
+                  ) : (
+                    <option disabled>No chapters yet — create a chapter first</option>
+                  )}
                 </select>
               </div>
 
@@ -340,11 +363,109 @@ Generate a JSON response with:
 
               <div>
                 <label className="block text-gray-700 mb-2">Content</label>
+                
+                {/* PDF Upload Zone */}
+                <div className="mb-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.txt"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      setPdfFile(file);
+                      setPdfExtracting(true);
+                      
+                      try {
+                        let extractedText = '';
+                        let pageCount = 0;
+                        
+                        if (file.name.endsWith('.pdf')) {
+                          const result = await extractTextFromPDF(file);
+                          extractedText = result.text;
+                          pageCount = result.pageCount;
+                        } else {
+                          // .txt file
+                          extractedText = await file.text();
+                          pageCount = 1;
+                        }
+                        
+                        setTopicForm(prev => ({ ...prev, content: extractedText }));
+                        setPdfInfo({ name: file.name, pages: pageCount, chars: extractedText.length });
+                        
+                        // Auto-fill topic name from filename if empty
+                        if (!topicForm.name) {
+                          const nameFromFile = file.name.replace(/\.(pdf|txt)$/i, '').replace(/[_-]/g, ' ');
+                          setTopicForm(prev => ({ ...prev, name: nameFromFile }));
+                        }
+                      } catch (err) {
+                        console.error('Error extracting PDF text:', err);
+                        setSuccessMsg('');
+                        alert('Could not extract text from this PDF. Please try pasting the content manually.');
+                      } finally {
+                        setPdfExtracting(false);
+                      }
+                    }}
+                  />
+                  
+                  {!pdfInfo ? (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={pdfExtracting}
+                      className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all flex flex-col items-center gap-2 text-gray-500 hover:text-blue-600"
+                    >
+                      {pdfExtracting ? (
+                        <>
+                          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                          <span className="text-sm font-medium text-blue-600">Extracting text from PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8" />
+                          <span className="text-sm font-medium">Upload PDF or Text File</span>
+                          <span className="text-xs text-gray-400">Supported: .pdf, .txt</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                      <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm truncate">{pdfInfo.name}</p>
+                        <p className="text-xs text-gray-500">{pdfInfo.pages} page{pdfInfo.pages > 1 ? 's' : ''} • {pdfInfo.chars.toLocaleString()} characters extracted</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPdfFile(null);
+                          setPdfInfo(null);
+                          setTopicForm(prev => ({ ...prev, content: '' }));
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="p-1 hover:bg-blue-100 rounded-lg transition-colors"
+                      >
+                        <X className="w-4 h-4 text-gray-500" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                {!pdfInfo && (
+                  <div className="relative my-3">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+                    <div className="relative flex justify-center text-xs"><span className="px-2 bg-white text-gray-400">or type content manually</span></div>
+                  </div>
+                )}
+
                 <textarea
                   value={topicForm.content}
                   onChange={(e) => setTopicForm({ ...topicForm, content: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
-                  placeholder="Enter the topic content here..."
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 h-32 text-sm"
+                  placeholder="Enter the topic content here or upload a PDF above..."
                 />
               </div>
 

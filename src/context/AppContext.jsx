@@ -4,6 +4,14 @@ import { db } from '../config/firebase';
 import * as firestoreService from '../services/firestore';
 import { storage } from '../utils/storage';
 import { seedFirestore, isDatabaseEmpty } from '../utils/seedFirestore';
+import {
+  MOCK_APP_STUDENTS,
+  MOCK_APP_MENTORS,
+  MOCK_APP_COURSES,
+  MOCK_SESSIONS,
+  MOCK_DOUBTS,
+  mockNotifications as INITIAL_NOTIFICATIONS,
+} from '../utils/mockData';
 
 const AppContext = createContext();
 
@@ -32,6 +40,13 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Shared notifications state — persisted in localStorage so reports survive
+  // account switches (mentor → admin demo flow)
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('learnsync-notifications');
+    return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+  });
+
   const loadInitialData = async () => {
     try {
       setLoading(true);
@@ -44,9 +59,22 @@ export const AppProvider = ({ children }) => {
 
       // Load saved doubts from localStorage (persisted across sessions)
       const savedDoubts = localStorage.getItem('learnsync-doubts');
-      const doubts = savedDoubts ? JSON.parse(savedDoubts) : [
-        { id: 'doubt_1', studentId: 'student_1', studentName: 'Priya', subject: 'Math', topic: 'Fractions', question: 'How do I solve fraction addition?', status: 'open', replies: [], date: '2026-03-29', createdAt: '2026-03-29' },
+      const doubts = savedDoubts ? JSON.parse(savedDoubts) : MOCK_DOUBTS;
+
+      // Load persisted courses/chapters/topics from localStorage
+      const savedCourses = JSON.parse(localStorage.getItem('learnsync-courses') || '[]');
+      const savedChapters = JSON.parse(localStorage.getItem('learnsync-chapters') || '[]');
+      const savedTopics = JSON.parse(localStorage.getItem('learnsync-topics') || '[]');
+
+      const defaultCourses = [
+        { id: 'course_1', name: 'Mathematics Fundamentals', subject: 'Math', description: 'Core math concepts', level: 'foundation', createdBy: 'mentor_1', chapters: [] },
+        { id: 'course_2', name: 'Science Exploration', subject: 'Science', description: 'Discover science', level: 'growth', createdBy: 'mentor_1', chapters: [] },
+        { id: 'course_3', name: 'English Mastery', subject: 'English', description: 'Advanced English', level: 'mastery', createdBy: 'mentor_1', chapters: [] },
       ];
+
+      // Merge: default courses + any saved courses (avoid duplicates by id)
+      const existingIds = new Set(savedCourses.map(c => c.id));
+      const allCourses = [...defaultCourses.filter(c => !existingIds.has(c.id)), ...savedCourses];
 
       setAppData({
         students: [
@@ -57,13 +85,9 @@ export const AppProvider = ({ children }) => {
         mentors: [
           { id: 'mentor_1', name: 'Dr. Anjali', role: 'mentor', onboarded: true, subjects: ['Math', 'Science'], education: 'M.Sc Mathematics', skillLevel: 'advanced', assignedStudents: ['student_1', 'student_2'], sessionsCompleted: 24, teachingCapacity: 10 },
         ],
-        courses: [
-          { id: 'course_1', name: 'Mathematics Fundamentals', subject: 'Math', description: 'Core math concepts', level: 'foundation' },
-          { id: 'course_2', name: 'Science Exploration', subject: 'Science', description: 'Discover science', level: 'growth' },
-          { id: 'course_3', name: 'English Mastery', subject: 'English', description: 'Advanced English', level: 'mastery' },
-        ],
-        chapters: [],
-        topics: [],
+        courses: allCourses,
+        chapters: savedChapters,
+        topics: savedTopics,
         sessions: [
           { id: 'session_1', mentorId: 'mentor_1', studentId: 'student_1', subject: 'Math', date: '2026-03-28', status: 'completed' },
           { id: 'session_2', mentorId: 'mentor_1', studentId: 'student_2', subject: 'Science', date: '2026-03-29', status: 'scheduled' },
@@ -191,33 +215,78 @@ export const AppProvider = ({ children }) => {
   };
 
   const addCourse = async (course) => {
-    const result = await firestoreService.createCourse(course);
+    const courseId = `course_${Date.now()}`;
+    const newCourse = {
+      ...course,
+      id: courseId,
+      chapters: [],
+      createdBy: course.createdBy || currentUser?.id,
+    };
 
-    if (result.success) {
-      await refreshData();
-    }
+    setAppData(prev => ({
+      ...prev,
+      courses: [...prev.courses, newCourse]
+    }));
 
-    return result;
+    // Persist to localStorage
+    const saved = JSON.parse(localStorage.getItem('learnsync-courses') || '[]');
+    saved.push(newCourse);
+    localStorage.setItem('learnsync-courses', JSON.stringify(saved));
+
+    return { success: true, id: courseId };
   };
 
   const addChapter = async (chapter) => {
-    const result = await firestoreService.createChapter(chapter);
+    const chapterId = `chapter_${Date.now()}`;
+    const newChapter = {
+      ...chapter,
+      id: chapterId,
+      topics: [],
+    };
 
-    if (result.success) {
-      await refreshData();
-    }
+    setAppData(prev => ({
+      ...prev,
+      chapters: [...prev.chapters, newChapter],
+      // Also update the course's chapters array
+      courses: prev.courses.map(c =>
+        c.id === chapter.courseId
+          ? { ...c, chapters: [...(c.chapters || []), chapterId] }
+          : c
+      )
+    }));
 
-    return result;
+    // Persist
+    const savedChapters = JSON.parse(localStorage.getItem('learnsync-chapters') || '[]');
+    savedChapters.push(newChapter);
+    localStorage.setItem('learnsync-chapters', JSON.stringify(savedChapters));
+
+    return { success: true, id: chapterId };
   };
 
   const addTopic = async (topic) => {
-    const result = await firestoreService.createTopic(topic);
+    const topicId = `topic_${Date.now()}`;
+    const newTopic = {
+      ...topic,
+      id: topicId,
+    };
 
-    if (result.success) {
-      await refreshData();
-    }
+    setAppData(prev => ({
+      ...prev,
+      topics: [...prev.topics, newTopic],
+      // Also update the chapter's topics array
+      chapters: prev.chapters.map(ch =>
+        ch.id === topic.chapterId
+          ? { ...ch, topics: [...(ch.topics || []), topicId] }
+          : ch
+      )
+    }));
 
-    return result;
+    // Persist
+    const savedTopics = JSON.parse(localStorage.getItem('learnsync-topics') || '[]');
+    savedTopics.push(newTopic);
+    localStorage.setItem('learnsync-topics', JSON.stringify(savedTopics));
+
+    return { success: true, id: topicId };
   };
 
   const addSession = async (session) => {
@@ -265,6 +334,46 @@ export const AppProvider = ({ children }) => {
     return { success: true };
   };
 
+  // ── Notification helpers ────────────────────────────────────────────────
+  const addNotification = (notification) => {
+    const newNotif = {
+      ...notification,
+      id: `notif_${Date.now()}`,
+      status: 'unread',
+      date: new Date().toISOString().split('T')[0],
+    };
+    setNotifications(prev => {
+      const updated = [newNotif, ...prev];
+      localStorage.setItem('learnsync-notifications', JSON.stringify(updated));
+      return updated;
+    });
+    return { success: true, id: newNotif.id };
+  };
+
+  const updateNotification = (id, updates) => {
+    setNotifications(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, ...updates } : n);
+      localStorage.setItem('learnsync-notifications', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const dismissNotification = (id) => {
+    setNotifications(prev => {
+      const updated = prev.filter(n => n.id !== id);
+      localStorage.setItem('learnsync-notifications', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const markAllNotificationsRead = () => {
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, status: 'read' }));
+      localStorage.setItem('learnsync-notifications', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const addStudyPlan = async (plan) => {
     const result = await firestoreService.createStudyPlan(plan.studentId, plan);
 
@@ -291,6 +400,7 @@ export const AppProvider = ({ children }) => {
     currentRole,
     loading,
     error,
+    notifications,
     updateCurrentUser,
     switchRole,
     addStudent,
@@ -303,6 +413,10 @@ export const AppProvider = ({ children }) => {
     addSession,
     addDoubt,
     updateDoubt,
+    addNotification,
+    updateNotification,
+    dismissNotification,
+    markAllNotificationsRead,
     addStudyPlan,
     updateStudyPlan,
     refreshData
